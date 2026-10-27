@@ -14,6 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=10">
   <link rel="stylesheet" href="new.css?v=10">
+  <link rel="stylesheet" href="new-extras.css?v=1">
   <script>
     (function () {
       var d = document.documentElement, seen = false;
@@ -52,6 +53,10 @@
         <a class="nav__switch" href="redesign.html">Have a website?</a>
         <a class="btn btn--ink nav__cta-mobile" href="#start">Get my free website</a>
       </nav>
+      <a class="nav__wa" data-wa href="#" target="_blank" rel="noopener" hidden aria-label="Message us on WhatsApp">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c.3 1.6 1.9 3.7 4.2 4.7l1.3-1.2 1.8.9c-.2 1-1 1.7-2 1.7-3.4-.2-6.8-3.6-7-7 0-1 .7-1.8 1.7-2l.9 1.8z"/></svg>
+        <span>WhatsApp</span>
+      </a>
       <a class="btn btn--ink nav__cta" href="#start">Get my free website</a>
       <button class="nav__toggle" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
         <span></span><span></span>
@@ -69,7 +74,7 @@
             <span class="line"><span class="line__in">You do great work.</span></span>
             <span class="line"><span class="line__in">Let people <span class="scribble-word"><em>find</em><svg class="scribble" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path d="M6 27c38-9 86-15 140-15 52 0 104 4 148 12-46-3-96-4-146-1-36 2-70 7-98 13"/></svg></span> it.</span></span>
           </h1>
-          <p class="nb-lead hero-in">We build your first website before you pay a cent. Type your business name and watch it start.</p>
+          <p class="nb-lead hero-in">We build your first website before you pay a cent, with a free preview in 3 to 5 days. Type your business name and watch it start.</p>
 
           <form class="builder hero-in" id="builder" novalidate>
             <label class="builder__label" for="b-name">Your business name</label>
@@ -89,10 +94,11 @@
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
             <ul class="assure">
-              <li>Free preview</li>
+              <li>Free preview in 3–5 days</li>
               <li>No card needed</li>
               <li>You own everything</li>
             </ul>
+            <p class="wa-alt" data-wa-block hidden>Rather message us? <a data-wa href="#" target="_blank" rel="noopener">Chat on WhatsApp</a></p>
           </form>
         </div>
 
@@ -122,6 +128,43 @@
                 <div class="piece piece--cta"><b data-k="cta">Call today</b><span class="p-pill p-pill--inv" data-k="btn">Book now</span></div>
               </div>
             </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REAL WORK: filled from LIVE_SITES in new.js, hidden while that list is empty ============ -->
+    <section class="real" id="work" hidden>
+      <div class="wrap">
+        <div class="real__head">
+          <h2 class="nb-h2">Sites we've already launched</h2>
+          <p>Real businesses, live right now. Click through and look around.</p>
+        </div>
+        <ul class="real__grid" id="real-grid"></ul>
+      </div>
+    </section>
+
+    <!-- ============ CUSTOMERS CAN'T FIND YOU ============ -->
+    <section class="unseen">
+      <div class="wrap unseen__grid">
+        <div class="unseen__copy">
+          <h2 class="nb-h2">Right now, customers can't find you.</h2>
+          <p>When someone nearby searches for <b data-search-who>a plumber</b>, Google shows businesses with websites. Without one, <b data-unseen-name>your business</b> isn't on that list.</p>
+          <a class="btn btn--ink btn--lg" href="#start">Get on the list</a>
+        </div>
+        <div class="serp" aria-hidden="true">
+          <div class="serp__bar">
+            <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>
+            <span data-search-query>plumber near me</span>
+          </div>
+          <div class="serp__result"><i class="serp__fav"></i><span class="serp__lines"><i></i><i></i><i></i></span></div>
+          <div class="serp__result"><i class="serp__fav"></i><span class="serp__lines"><i></i><i></i><i></i></span></div>
+          <div class="serp__result"><i class="serp__fav"></i><span class="serp__lines"><i></i><i></i><i></i></span></div>
+          <div class="serp__you">
+            <span class="serp__tag">Where you should be</span>
+            <span class="serp__url" data-unseen-url>yourbusiness.com</span>
+            <span class="serp__title" data-unseen-title>Your Business</span>
+            <span class="serp__desc">Not listed yet</span>
           </div>
         </div>
       </div>
@@ -167,18 +210,21 @@
           <li>
             <span class="how__num">1</span>
             <h3>Tell us your business name</h3>
-            <p>And what you do. It takes about two minutes, right here on this page.</p>
+            <p>And what you do, right here on this page.</p>
+            <span class="how__time">About 2 minutes</span>
             <a class="how__link" href="#start">Do it now</a>
           </li>
           <li>
             <span class="how__num">2</span>
             <h3>We build your preview</h3>
             <p>A real website designed for your business, not a template. It costs you nothing.</p>
+            <span class="how__time">3 to 5 days</span>
           </li>
           <li>
             <span class="how__num">3</span>
             <h3>Approve it and go live</h3>
-            <p>Ask for changes until you love it. Then you pay, and you're live within 7 days.</p>
+            <p>Ask for changes until you love it. Then you pay, and we launch.</p>
+            <span class="how__time">Live within 7 days of approval</span>
           </li>
         </ol>
       </div>
@@ -219,6 +265,24 @@
               <tr><th scope="row">Google profile set up</th><td>Up to you</td><td>Often extra</td><td class="us">Included</td></tr>
             </tbody>
           </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ PAYS FOR ITSELF ============ -->
+    <section class="payback">
+      <div class="wrap payback__grid">
+        <div>
+          <h2 class="nb-h2">How many jobs until it pays for itself?</h2>
+          <p class="payback__lead">Slide to what one job or appointment is usually worth to you.</p>
+        </div>
+        <div class="payback__card">
+          <label class="payback__label" for="job-value">One job is worth about</label>
+          <output class="payback__value" id="job-out" for="job-value">$350</output>
+          <input class="payback__range" id="job-value" type="range" min="50" max="3000" step="25" value="350">
+          <p class="payback__result" aria-live="polite">Your Starter site pays for itself after <b id="jobs-n">3 jobs</b>.</p>
+          <div class="payback__jobs" id="jobs-dots" aria-hidden="true"></div>
+          <p class="payback__note">Worked out from the Starter price of $999. Every job after that is extra.</p>
         </div>
       </div>
     </section>
@@ -304,7 +368,7 @@
           </details>
           <details>
             <summary>How long does it take?</summary>
-            <p>We build your preview first. Once you approve it, your site is live within 7 days.</p>
+            <p>Your free preview arrives in 3 to 5 days. Once you approve it, your site is live within 7 days.</p>
           </details>
           <details>
             <summary>Will people find me on Google?</summary>
@@ -323,12 +387,19 @@
       <div class="wrap start__grid">
         <div class="start__copy">
           <h2 class="start__title">Let's build <span id="echo-name">your website</span>.</h2>
-          <p>Two quick steps and we start designing. We'll email you a link to your preview.</p>
+          <p>Two quick steps and we start designing. Your preview link arrives by email in 3 to 5 days.</p>
           <ul class="assure assure--ink">
             <li>Free preview</li>
             <li>No card needed</li>
             <li>Pay only if you love it</li>
           </ul>
+          <div class="wa-talk" data-wa-block hidden>
+            <p>Rather talk it through?</p>
+            <a class="btn btn--ghost" data-wa href="#" target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c.3 1.6 1.9 3.7 4.2 4.7l1.3-1.2 1.8.9c-.2 1-1 1.7-2 1.7-3.4-.2-6.8-3.6-7-7 0-1 .7-1.8 1.7-2l.9 1.8z"/></svg>
+              Message us on WhatsApp
+            </a>
+          </div>
         </div>
 
         <form class="form funnel" id="funnel" novalidate data-subject="Free website preview" data-subject-field="business">
@@ -424,8 +495,12 @@
   <a class="sticky-cta" href="#start" aria-hidden="true" tabindex="-1">Get my free website
     <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
   </a>
+  <!-- appears beside the sticky button once a WhatsApp number is set in new.js -->
+  <a class="sticky-wa" data-wa href="#" target="_blank" rel="noopener" hidden aria-label="Message us on WhatsApp">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c.3 1.6 1.9 3.7 4.2 4.7l1.3-1.2 1.8.9c-.2 1-1 1.7-2 1.7-3.4-.2-6.8-3.6-7-7 0-1 .7-1.8 1.7-2l.9 1.8z"/></svg>
+  </a>
 
   <script src="main.js?v=10"></script>
-  <script src="new.js?v=10"></script>
+  <script src="new.js?v=11"></script>
 </body>
 </html>

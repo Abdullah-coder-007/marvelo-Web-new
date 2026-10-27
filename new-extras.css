@@ -1,0 +1,119 @@
+/* =========================================================
+   "I need a website" page: conversion additions
+   Real work strip, "customers can't find you", payback calculator,
+   step timings and WhatsApp contact points.
+   ========================================================= */
+
+/* ---------- WhatsApp contact points (shown only when a number is set in new.js) ---------- */
+.nav__wa {
+  display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 14px; margin-right: 4px;
+  border-radius: 999px; font-weight: 600; font-size: 15px; color: var(--ink);
+  transition: background var(--t-fast);
+}
+.nav__wa:hover { background: var(--paper-2); }
+.nav__wa svg, .wa-talk svg, .sticky-wa svg {
+  width: 20px; height: 20px; fill: none; stroke: #128C4A; stroke-width: 1.9; stroke-linecap: round; stroke-linejoin: round;
+}
+.nav__wa[hidden], [data-wa-block][hidden], .sticky-wa[hidden] { display: none; }
+.wa-alt { font-size: 15px; color: var(--muted); text-align: center; margin-top: 2px; }
+.wa-alt a { color: #0E7A3E; font-weight: 600; text-decoration: underline; text-underline-offset: 3px; }
+.wa-talk { margin-top: 26px; display: grid; gap: 10px; justify-items: start; }
+.wa-talk p { font-weight: 600; }
+
+/* ---------- real work ---------- */
+.real { padding: clamp(64px, 8vw, 110px) 0; border-top: 1.5px solid var(--ink); }
+.real__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 16px 40px; margin-bottom: clamp(28px, 4vw, 48px); }
+.real__head p { color: var(--muted); max-width: 34ch; }
+.real__grid { list-style: none; padding: 0; margin: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr)); gap: clamp(16px, 2vw, 24px); }
+.real-card { display: block; border: 1.5px solid var(--ink); border-radius: var(--radius); overflow: hidden; background: #fff; transition: transform var(--t-med) var(--ease), box-shadow var(--t-med) var(--ease); }
+.real-card:hover { transform: translate(-4px, -4px); box-shadow: 8px 8px 0 var(--ink); }
+.real-card__bar { display: flex; align-items: center; gap: 6px; padding: 10px 14px; background: var(--paper-2); border-bottom: 1px solid var(--line); }
+.real-card__bar i { width: 9px; height: 9px; border-radius: 50%; background: #C9C4BA; }
+.real-card__bar span { margin-left: 8px; font-family: var(--f-mono); font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.real-card__shot { position: relative; aspect-ratio: 16 / 10; background: var(--paper-2); overflow: hidden; }
+.real-card__shot img { width: 100%; height: 100%; object-fit: cover; object-position: top; }
+/* shown if the screenshot can't load: the domain set large on a tinted panel */
+.real-card__fallback { position: absolute; inset: 0; display: grid; place-items: center; padding: 20px; text-align: center; font-size: clamp(1.3rem, 2.4vw, 1.8rem); font-weight: 800; letter-spacing: -.03em; color: var(--ink); background: #FFE3EC; }
+.real-card__meta { display: grid; gap: 4px; padding: 16px 18px 18px; }
+.real-card__top { display: flex; align-items: center; gap: 10px; }
+.real-card__top b { font-size: 1.2rem; letter-spacing: -.02em; }
+.real-card__live { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; color: #0E7A3E; }
+.real-card__live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #1DB954; }
+.real-card__meta span, .real-card__meta p { color: var(--muted); font-size: 15px; }
+
+/* ---------- customers can't find you ---------- */
+.unseen { padding: clamp(72px, 9vw, 130px) 0; background: var(--paper-2); border-top: 1.5px solid var(--ink); }
+.unseen__grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(32px, 6vw, 88px); align-items: center; }
+.unseen__copy > p { margin: 18px 0 26px; font-size: 1.15rem; max-width: 40ch; color: var(--ink-3); }
+.unseen__copy b { color: var(--ink); }
+.serp { background: #fff; border: 1.5px solid var(--ink); border-radius: var(--radius); padding: clamp(18px, 2.4vw, 28px); display: grid; gap: 18px; box-shadow: 10px 10px 0 var(--ink); }
+.serp__bar { display: flex; align-items: center; gap: 10px; min-height: 48px; padding: 0 18px; border-radius: 999px; border: 1px solid #DADCE0; font-size: 16px; color: #202124; }
+.serp__bar svg { width: 18px; height: 18px; fill: none; stroke: #5F6368; stroke-width: 2; stroke-linecap: round; flex: none; }
+.serp__result { display: flex; gap: 12px; align-items: flex-start; }
+.serp__fav { width: 26px; height: 26px; border-radius: 50%; background: #E8EAED; flex: none; }
+.serp__lines { flex: 1; display: grid; gap: 7px; padding-top: 2px; }
+.serp__lines i { display: block; height: 9px; border-radius: 99px; background: #E8EAED; }
+.serp__lines i:first-child { width: 38%; height: 7px; }
+.serp__lines i:nth-child(2) { width: 72%; height: 12px; background: #C6D4F5; }
+.serp__lines i:nth-child(3) { width: 90%; }
+.serp__you {
+  position: relative; display: grid; gap: 3px; padding: 22px 18px 16px; border: 2px dashed var(--pink); border-radius: 14px;
+  background: #FFF5F8;
+}
+.serp__tag { position: absolute; top: -12px; left: 14px; background: var(--pink); color: var(--ink); font-size: 12.5px; font-weight: 700; padding: 2px 10px; border-radius: 999px; }
+.serp__url { font-size: 13px; color: #4D5156; }
+.serp__title { font-size: 1.2rem; color: #1A0DAB; font-weight: 500; overflow-wrap: anywhere; }
+.serp__desc { font-size: 14px; color: var(--pink-deep); font-weight: 600; }
+.serp__you.is-named { border-style: solid; }
+
+/* ---------- step timings ---------- */
+.how__time {
+  display: inline-block; margin-top: 14px; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid var(--line-dark); color: var(--paper); font-size: 14px; font-weight: 600;
+}
+.how__steps li:first-child .how__time { border-color: var(--pink); }
+.how__time + .how__link { margin-left: 14px; }
+
+/* ---------- payback calculator ---------- */
+.payback { padding: clamp(80px, 10vw, 140px) 0 clamp(40px, 5vw, 72px); }
+.payback__grid { display: grid; grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: clamp(32px, 6vw, 88px); align-items: center; }
+.payback__lead { margin-top: 18px; color: var(--muted); font-size: 1.1rem; max-width: 34ch; }
+.payback__card { background: var(--ink); color: var(--paper); border-radius: var(--radius); padding: clamp(24px, 3vw, 40px); box-shadow: 12px 12px 0 var(--pink); display: grid; gap: 12px; }
+.payback__label { font-size: 15px; color: var(--muted-dark); font-weight: 500; }
+.payback__value { font-size: clamp(3rem, 6vw, 4.6rem); font-weight: 800; letter-spacing: -.05em; line-height: 1; }
+.payback__range { width: 100%; height: 44px; margin: 4px 0; accent-color: var(--pink); cursor: pointer; background: transparent; }
+.payback__range:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; border-radius: 8px; }
+.payback__result { font-size: clamp(1.2rem, 2vw, 1.5rem); font-weight: 600; letter-spacing: -.01em; }
+.payback__result b { color: var(--pink); }
+.payback__jobs { display: flex; flex-wrap: wrap; gap: 6px; min-height: 22px; }
+.payback__jobs i { width: 22px; height: 22px; border-radius: 6px; background: var(--pink); }
+.payback__jobs i.is-extra { background: transparent; border: 1.5px dashed var(--line-dark); }
+.payback__note { font-size: 14px; color: var(--muted-dark); }
+
+/* ---------- phones ---------- */
+@media (max-width: 1100px) {
+  .nav__wa span { display: none; }
+  .nav__wa { padding: 0 12px; }
+}
+@media (max-width: 860px) {
+  .unseen__grid, .payback__grid { grid-template-columns: 1fr; }
+  .nav__wa { display: none !important; } /* on phones WhatsApp sits beside the sticky button instead */
+}
+@media (max-width: 760px) {
+  /* make room for the round WhatsApp button next to the sticky "Get my free website" button */
+  .has-wa .sticky-cta { right: 80px; }
+  .sticky-wa {
+    position: fixed; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 60;
+    display: grid; place-items: center; width: 56px; height: 56px; border-radius: 50%;
+    background: #fff; border: 2px solid var(--ink); box-shadow: 0 10px 30px -10px rgba(15, 15, 18, .5);
+    transform: translateY(140%); transition: transform .45s var(--expo);
+  }
+  .sticky-wa svg { width: 26px; height: 26px; }
+  .sticky-cta.is-shown ~ .sticky-wa { transform: none; }
+}
+@media (min-width: 761px) { .sticky-wa { display: none !important; } }
+@media (max-width: 640px) {
+  .serp { box-shadow: 5px 5px 0 var(--ink); }
+  .payback__card { box-shadow: 6px 6px 0 var(--pink); }
+  .how__time + .how__link { margin-left: 0; display: table; }
+}
