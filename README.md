@@ -14,10 +14,15 @@ Then open http://localhost:8080.
 
 ## Files
 
-- `index.html`: page markup
-- `styles.css`: design tokens, layout, the intro and 3D assembly styles
-- `main.js`: intro sequence, scroll-driven 3D assembly, niche picker, mobile menu and the free-preview form
+- `index.html`: brand intro, then the chooser: "I need a website" or "I already have a website"
+- `new-website.html`: homepage for businesses with no website (live builder, 2-step preview form)
+- `redesign.html`: homepage for businesses that already have a website (3D assembly, niche picker); to be rebuilt next
+- `styles.css`: shared design tokens, layout, intro, chooser and 3D assembly styles
+- `new.css`, `new.js`: styles and behaviour for `new-website.html`
+- `main.js`: shared intro, nav, trade skins, 3D assembly and the redesign page's form
 - `.nojekyll`: lets GitHub Pages serve the files as they are
+
+When you change a CSS or JS file, bump its `?v=` number in the HTML so browsers fetch the new copy.
 
 ## Before launch
 
