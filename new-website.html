@@ -12,8 +12,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7">
-  <link rel="stylesheet" href="new.css?v=9">
+  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="new.css?v=10">
   <script>
     (function () {
       var d = document.documentElement, seen = false;
@@ -61,7 +61,7 @@
 
   <main id="main">
     <!-- ============ HERO: live website builder ============ -->
-    <section class="nb-hero">
+    <section class="nb-hero" data-sticky-hide>
       <div class="wrap nb-hero__grid">
         <div class="nb-hero__copy">
           <p class="eyebrow hero-in"><span class="dot" aria-hidden="true"></span> For businesses without a website</p>
@@ -319,7 +319,7 @@
     </section>
 
     <!-- ============ START: 2-step form ============ -->
-    <section class="start" id="start">
+    <section class="start" id="start" data-sticky-hide>
       <div class="wrap start__grid">
         <div class="start__copy">
           <h2 class="start__title">Let's build <span id="echo-name">your website</span>.</h2>
@@ -331,17 +331,17 @@
           </ul>
         </div>
 
-        <form class="form funnel" id="funnel" novalidate>
+        <form class="form funnel" id="funnel" novalidate data-subject="Free website preview" data-subject-field="business">
           <div class="funnel__progress">
             <p class="funnel__step" id="funnel-step">Step 1 of 2: your business</p>
             <div class="funnel__bar" aria-hidden="true"><span></span></div>
           </div>
 
-          <fieldset class="funnel__panel" data-step="1">
+          <fieldset class="funnel__panel" data-label="Step 1 of 2: your business">
             <legend class="sr">Your business</legend>
             <div class="field">
               <label for="s-biz">Business name</label>
-              <input id="s-biz" name="business" type="text" autocomplete="organization" required aria-describedby="s-biz-err">
+              <input id="s-biz" name="business" type="text" autocomplete="organization" required aria-describedby="s-biz-err" data-msg="Add your business name so we know what to build.">
               <p class="field__error" id="s-biz-err"></p>
             </div>
             <div class="field-row">
@@ -358,7 +358,7 @@
               </div>
               <div class="field">
                 <label for="s-city">City or town</label>
-                <input id="s-city" name="city" type="text" autocomplete="address-level2" required aria-describedby="s-city-err">
+                <input id="s-city" name="city" type="text" autocomplete="address-level2" required aria-describedby="s-city-err" data-msg="Add your city or town so we can write for your area.">
                 <p class="field__error" id="s-city-err"></p>
               </div>
             </div>
@@ -367,7 +367,7 @@
             </button>
           </fieldset>
 
-          <fieldset class="funnel__panel" data-step="2" hidden>
+          <fieldset class="funnel__panel" data-label="Step 2 of 2: where to send your preview" hidden>
             <legend class="sr">Where to send your preview</legend>
             <div class="field">
               <label for="s-name">Your name</label>
@@ -375,7 +375,7 @@
             </div>
             <div class="field">
               <label for="s-email">Email</label>
-              <input id="s-email" name="email" type="email" autocomplete="email" required aria-describedby="s-email-err">
+              <input id="s-email" name="email" type="email" autocomplete="email" required aria-describedby="s-email-err" data-msg="Enter an email we can send your preview to.">
               <p class="field__error" id="s-email-err"></p>
             </div>
             <div class="field">
@@ -391,7 +391,7 @@
           <div class="funnel__done" hidden tabindex="-1">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.5 3.5L17 9"/></svg>
             <p class="funnel__done-title">Almost there.</p>
-            <p id="done-copy">Your email app should open with your details filled in. Press send and we'll start building.</p>
+            <p>Your email app should open with the details for <b data-done-name>your business</b> filled in. Press send and we'll start building.</p>
             <p class="funnel__done-small">Nothing opened? Email us at <a href="mailto:hello@marveloweb.com">hello@marveloweb.com</a>.</p>
           </div>
         </form>
@@ -425,7 +425,7 @@
     <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
   </a>
 
-  <script src="main.js?v=7"></script>
-  <script src="new.js?v=7"></script>
+  <script src="main.js?v=10"></script>
+  <script src="new.js?v=10"></script>
 </body>
 </html>

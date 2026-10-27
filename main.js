@@ -169,38 +169,101 @@
     pick('plumbing');
   }
 
-  // ---------- Free-preview form (redesign page) — no backend yet, so it opens the visitor's email app ----------
-  const form = document.getElementById('contact-form');
-  if (form) {
-    const email = document.getElementById('f-email');
-    const emailErr = document.getElementById('f-email-err');
-    const note = document.getElementById('form-note');
-    const TO = 'hello@marveloweb.com';
+  // ---------- Multi-step lead form (form.funnel) ----------
+  // Each .funnel__panel is a step. Required fields carry data-msg (the error to show) and
+  // aria-describedby (where to show it). No backend yet, so submitting opens the visitor's
+  // email app with every answer filled in.
+  const TO = 'hello@marveloweb.com';
+  const isEmail = (v) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v.trim());
 
-    const validEmail = () => {
-      const ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim());
-      email.setAttribute('aria-invalid', String(!ok));
-      emailErr.textContent = ok ? '' : 'Please enter a valid email so we can reply.';
-      return ok;
+  document.querySelectorAll('form.funnel').forEach((form) => {
+    const panels = [...form.querySelectorAll('.funnel__panel')];
+    const stepLabel = form.querySelector('.funnel__step');
+    const done = form.querySelector('.funnel__done');
+    let at = 1;
+
+    const setError = (input, msg) => {
+      input.setAttribute('aria-invalid', String(Boolean(msg)));
+      const out = document.getElementById(input.getAttribute('aria-describedby'));
+      if (out) out.textContent = msg;
+      return !msg;
     };
-    email.addEventListener('blur', () => { if (email.value) validEmail(); });
+    const check = (input) => {
+      const v = input.value.trim();
+      if (input.required && !v) return setError(input, input.dataset.msg);
+      if (input.type === 'email' && v && !isEmail(v)) return setError(input, 'Enter an email we can send your preview to.');
+      return setError(input, '');
+    };
+    const validate = (panel) => {
+      const bad = [...panel.querySelectorAll('input[required], input[type="email"]')].filter((i) => !check(i));
+      if (bad.length) bad[0].focus();
+      return !bad.length;
+    };
+    const goTo = (n) => {
+      at = n;
+      form.dataset.at = n;
+      panels.forEach((p, i) => {
+        const show = i === n - 1;
+        p.hidden = !show;
+        if (show && !reducedMotion) { p.classList.remove('is-entering'); void p.offsetWidth; p.classList.add('is-entering'); }
+      });
+      stepLabel.textContent = panels[n - 1].dataset.label;
+      const first = [...panels[n - 1].querySelectorAll('input, select')].find((i) => !i.value) || panels[n - 1].querySelector('input, select');
+      first.focus();
+    };
+
+    form.addEventListener('click', (e) => {
+      if (e.target.closest('[data-next]') && validate(panels[at - 1])) goTo(at + 1);
+      if (e.target.closest('[data-back]')) goTo(at - 1);
+    });
+    form.addEventListener('input', (e) => { if (e.target.getAttribute('aria-invalid') === 'true') check(e.target); });
+    form.addEventListener('focusout', (e) => { if (e.target.type === 'email' && e.target.value) check(e.target); });
+
+    // "Label: answer" lines for the email body, in the order the fields appear
+    const answers = () => {
+      const lines = [];
+      form.querySelectorAll('input, select, textarea').forEach((el) => {
+        // hidden fields are included only when they carry a data-label (e.g. the redesign checklist answers)
+        if (!el.name || (el.type === 'hidden' && !el.dataset.label) || ((el.type === 'checkbox' || el.type === 'radio') && !el.checked)) return;
+        const v = el.tagName === 'SELECT' ? el.options[el.selectedIndex].text : el.value.trim();
+        if (!v) return;
+        const label = el.dataset.label || (form.querySelector(`label[for="${el.id}"]`) || {}).firstChild?.textContent?.trim() || el.name;
+        lines.push(`${label}: ${v}`);
+      });
+      return lines;
+    };
 
     form.addEventListener('submit', (e) => {
       e.preventDefault();
-      if (!validEmail()) { email.focus(); return; }
-      const data = new FormData(form);
-      const body = [
-        `Name: ${data.get('name') || ''}`,
-        `Email: ${data.get('email')}`,
-        `Business: ${data.get('business') || ''}`,
-        `City: ${data.get('city') || ''}`,
-        `Current website: ${data.get('website') || 'None'}`,
-        `Type of business: ${data.get('type') || 'Not given'}`,
-      ].join('\n');
-      const subject = `Free preview request — ${data.get('business') || data.get('name') || 'new business'}`;
-      window.location.href = `mailto:${TO}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      note.textContent = 'Opening your email app… if nothing happens, write to us at ' + TO;
+      if (!validate(panels[at - 1])) return;
+      const subjectFrom = form.elements[form.dataset.subjectField];
+      const who = (subjectFrom && subjectFrom.value.trim()) || 'new enquiry';
+      const body = [form.dataset.subject, '', ...answers()].join('\n');
+      window.location.href = `mailto:${TO}?subject=${encodeURIComponent(`${form.dataset.subject}: ${who}`)}&body=${encodeURIComponent(body)}`;
+
+      panels.forEach((p) => (p.hidden = true));
+      form.querySelector('.funnel__progress').hidden = true;
+      done.hidden = false;
+      const name = done.querySelector('[data-done-name]');
+      if (name) name.textContent = who;
+      done.focus();
     });
+  });
+
+  // ---------- Sticky main action on phones ----------
+  // Shown once the hero is out of view, hidden again while the form is on screen.
+  const sticky = document.querySelector('.sticky-cta');
+  if (sticky) {
+    const watched = [...document.querySelectorAll('[data-sticky-hide]')];
+    const inView = new Map();
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((en) => inView.set(en.target, en.isIntersecting));
+      const show = !watched.some((el) => inView.get(el));
+      sticky.classList.toggle('is-shown', show);
+      sticky.setAttribute('aria-hidden', String(!show));
+      sticky.tabIndex = show ? 0 : -1;
+    });
+    watched.forEach((el) => io.observe(el));
   }
 
   const year = document.getElementById('year');

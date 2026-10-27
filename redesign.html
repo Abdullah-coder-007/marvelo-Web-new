@@ -3,18 +3,19 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MarveloWeb — Websites for local businesses, previewed free</title>
-  <meta name="description" content="MarveloWeb builds a free preview of your new website before you pay. Approve it and you're live in 7 days. Websites for plumbers, HVAC, roofers, dentists and med spas.">
-  <meta property="og:title" content="MarveloWeb — See your new website before you pay">
-  <meta property="og:description" content="We build a free preview of your new site. Approve it and it's live in 7 days.">
+  <title>Website redesign for local businesses, previewed free — MarveloWeb</title>
+  <meta name="description" content="Already have a website? MarveloWeb redesigns it and shows you the new version free before you pay. Keep your domain, email and Google rankings. Live in 7 days.">
+  <meta property="og:title" content="See your redesigned website before you pay">
+  <meta property="og:description" content="Send us your website. We redesign it and show you the new version free. Keep your domain, email and rankings.">
   <meta name="theme-color" content="#0F0F12">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230F0F12'/%3E%3Cpath d='M16 5l2.6 8.4L27 16l-8.4 2.6L16 27l-2.6-8.4L5 16l8.4-2.6z' fill='%23FF3D7F'/%3E%3C/svg%3E">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=7">
+  <link rel="stylesheet" href="styles.css?v=10">
+  <link rel="stylesheet" href="new.css?v=10">
+  <link rel="stylesheet" href="redesign.css?v=10">
   <script>
-    // Decide before first paint: play the full intro once per visit, a short hero entrance after that
     (function () {
       var d = document.documentElement, seen = false;
       d.classList.add('js');
@@ -27,7 +28,7 @@
 <body>
   <a class="skip" href="#main">Skip to content</a>
 
-  <!-- ============ INTRO CURTAIN ============ -->
+  <!-- Intro plays here too when someone lands on this page straight from an email -->
   <div class="curtain" aria-hidden="true">
     <div class="curtain__stage">
       <svg class="curtain__spark" viewBox="0 0 24 24"><path d="M12 1l2.9 8.1L23 12l-8.1 2.9L12 23l-2.9-8.1L1 12l8.1-2.9z"/></svg>
@@ -40,19 +41,19 @@
   <!-- ============ HEADER ============ -->
   <header class="nav" id="top">
     <div class="wrap nav__inner">
-      <a class="logo" href="#top" aria-label="MarveloWeb home">
+      <a class="logo" href="./" aria-label="MarveloWeb home">
         <svg class="logo__spark" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1l2.9 8.1L23 12l-8.1 2.9L12 23l-2.9-8.1L1 12l8.1-2.9z"/></svg>
         <span>marvelo<b>web</b></span>
       </a>
       <nav class="nav__links" id="menu" aria-label="Primary">
-        <a href="#work">Work</a>
-        <a href="#process">How it works</a>
+        <a href="#check">Check your site</a>
+        <a href="#how">How it works</a>
         <a href="#pricing">Pricing</a>
         <a href="#faq">FAQ</a>
         <a class="nav__switch" href="new-website.html">Need a new website?</a>
-        <a class="btn btn--ink nav__cta-mobile" href="#contact">Get a free preview</a>
+        <a class="btn btn--ink nav__cta-mobile" href="#start">Get my free redesign</a>
       </nav>
-      <a class="btn btn--ink nav__cta" href="#contact">Get a free preview</a>
+      <a class="btn btn--ink nav__cta" href="#start">Get my free redesign</a>
       <button class="nav__toggle" aria-expanded="false" aria-controls="menu" aria-label="Open menu">
         <span></span><span></span>
       </button>
@@ -60,49 +61,120 @@
   </header>
 
   <main id="main">
-    <!-- ============ HERO ============ -->
-    <section class="hero">
-      <div class="wrap">
-        <p class="eyebrow hero-in"><span class="dot" aria-hidden="true"></span> Taking on new businesses now</p>
-        <h1 class="hero__title">
-          <span class="line"><span class="line__in">We design</span></span>
-          <span class="line"><span class="line__in">websites people</span></span>
-          <span class="line"><span class="line__in"><span class="scribble-word"><em>marvel</em><svg class="scribble" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path d="M6 27c38-9 86-15 140-15 52 0 104 4 148 12-46-3-96-4-146-1-36 2-70 7-98 13"/></svg></span> at<span class="hero__spark" aria-hidden="true">✦</span></span></span>
-        </h1>
-        <div class="hero__foot">
-          <p class="hero__lead hero-in">We build a preview of your new website before you spend a cent. Like it, and it's live in 7 days. Don't, and you owe us nothing.</p>
-          <div class="hero__actions hero-in">
-            <a class="btn btn--pink btn--lg" href="#contact">Get my free preview
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-            </a>
-            <a class="btn btn--ghost btn--lg" href="#work">See examples</a>
+    <!-- ============ HERO: website address + before/after ============ -->
+    <section class="nb-hero" data-sticky-hide>
+      <div class="wrap nb-hero__grid">
+        <div class="nb-hero__copy">
+          <p class="eyebrow hero-in"><span class="dot" aria-hidden="true"></span> For businesses that already have a website</p>
+          <h1 class="nb-title">
+            <span class="line"><span class="line__in">Your work got better.</span></span>
+            <span class="line"><span class="line__in">Did your <span class="scribble-word"><em>website</em><svg class="scribble" viewBox="0 0 300 40" preserveAspectRatio="none" aria-hidden="true"><path d="M6 27c38-9 86-15 140-15 52 0 104 4 148 12-46-3-96-4-146-1-36 2-70 7-98 13"/></svg></span>?</span></span>
+          </h1>
+          <p class="nb-lead hero-in">Send us your current website. We redesign it and show you the new version before you pay a cent.</p>
+
+          <form class="builder hero-in" id="url-form" novalidate>
+            <label class="builder__label" for="u-site">Your current website</label>
+            <input class="builder__input" id="u-site" name="website" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="yourbusiness.com" aria-describedby="u-site-err">
+            <p class="field__error field__error--light" id="u-site-err"></p>
+            <button class="btn btn--pink btn--lg btn--block" type="submit">Show me my redesign
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <ul class="assure">
+              <li>Free preview</li>
+              <li>Keep your domain and email</li>
+              <li>We protect your Google rankings</li>
+            </ul>
+          </form>
+        </div>
+
+        <!-- Before/after: drag (or use arrow keys) to compare. Both address bars show the visitor's domain once typed. -->
+        <div class="nb-hero__demo hero-in">
+          <p class="demo-tag"><span class="dot" aria-hidden="true"></span> Drag to compare</p>
+          <div class="ba" id="ba" style="--pos: 50%">
+            <div class="ba__view">
+              <div class="site ba__after" data-niche="plumbing" aria-hidden="true">
+                <div class="site__chrome"><i></i><i></i><i></i><span class="site__url" data-url>yourbusiness.com</span></div>
+                <div class="site__body">
+                  <div class="piece piece--nav">
+                    <span class="p-logo"><svg class="p-icon" viewBox="0 0 24 24"><path data-icon/></svg><b data-k="brand">Your Business</b></span>
+                    <span class="p-links"><i>Services</i><i>Areas</i><i>About</i></span>
+                    <span class="p-pill" data-k="btn">Book now</span>
+                  </div>
+                  <div class="piece piece--hero">
+                    <p class="p-h" data-k="h">Leak? Fixed today.</p>
+                    <p class="p-sub" data-k="sub">Licensed plumbers across the metro area.</p>
+                    <span class="p-pill p-pill--lg" data-k="btn">Book now</span>
+                  </div>
+                  <div class="piece piece--visual">
+                    <svg class="p-big" viewBox="0 0 24 24"><path data-icon/></svg>
+                    <span class="p-chip" data-k="chip">Open 24/7</span>
+                  </div>
+                  <div class="piece piece--card" data-piece="3"><span class="p-dot"></span><b data-k="c0">Service one</b><i></i><i></i></div>
+                  <div class="piece piece--card" data-piece="4"><span class="p-dot"></span><b data-k="c1">Service two</b><i></i><i></i></div>
+                  <div class="piece piece--card" data-piece="5"><span class="p-dot"></span><b data-k="c2">Service three</b><i></i><i></i></div>
+                  <div class="piece piece--cta"><b data-k="cta">Call today</b><span class="p-pill p-pill--inv" data-k="btn">Book now</span></div>
+                </div>
+              </div>
+
+              <div class="ba__before" aria-hidden="true">
+                <div class="old">
+                  <div class="old__chrome"><span class="old__btn"></span><span class="old__btn"></span><span class="old__addr">http://www.<span data-url>yourbusiness.com</span>/index.html</span></div>
+                  <div class="old__page">
+                    <div class="old__banner">Welcome to Our Website!!</div>
+                    <div class="old__links"><u>Home</u> | <u>About Us</u> | <u>Services</u> | <u>Testimonials</u> | <u>Contact Us</u></div>
+                    <div class="old__cols">
+                      <div class="old__side"><u>Click Here</u><u>Our Services</u><u>Photo Gallery</u><u>Links</u><span class="old__counter">Visitors: 004213</span></div>
+                      <div class="old__main">
+                        <p class="old__h">Quality Service Since 1998</p>
+                        <p>We are a family owned business serving the area. Please call us for all of your needs. We look forward to serving you!!</p>
+                        <p class="old__warn">Page under construction</p>
+                        <p class="old__small">Best viewed in Internet Explorer at 1024 x 768. Last updated 2014.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="ba__handle" aria-hidden="true"><span></span></div>
+              <span class="ba__tag ba__tag--before" aria-hidden="true">Before</span>
+              <span class="ba__tag ba__tag--after" aria-hidden="true">After</span>
+              <input class="ba__range" type="range" min="0" max="100" value="50" aria-label="Compare the old and new website. Lower shows more of the new design.">
+            </div>
           </div>
-          <a class="badge hero-in" href="#process" aria-label="Free preview, live in 7 days — see how it works">
-            <svg viewBox="0 0 200 200" aria-hidden="true">
-              <defs><path id="circle" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs>
-              <text textLength="486" lengthAdjust="spacing"><textPath href="#circle" textLength="486" lengthAdjust="spacing">FREE PREVIEW ✦ LIVE IN 7 DAYS ✦ FREE PREVIEW ✦ LIVE IN 7 DAYS ✦</textPath></text>
-            </svg>
-            <svg class="badge__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </a>
         </div>
       </div>
     </section>
 
-    <!-- ============ MARQUEE ============ -->
-    <div class="marquee" aria-hidden="true">
-      <div class="marquee__track">
-        <span>Plumbers</span><i>✦</i><span>HVAC</span><i>✦</i><span>Roofers</span><i>✦</i><span>Dentists</span><i>✦</i><span>Med spas</span><i>✦</i><span>Local businesses</span><i>✦</i>
-        <span>Plumbers</span><i>✦</i><span>HVAC</span><i>✦</i><span>Roofers</span><i>✦</i><span>Dentists</span><i>✦</i><span>Med spas</span><i>✦</i><span>Local businesses</span><i>✦</i>
+    <!-- ============ WARNING SIGNS CHECKLIST ============ -->
+    <section class="check" id="check">
+      <div class="wrap check__grid">
+        <div>
+          <h2 class="nb-h2">Is your website costing you calls?</h2>
+          <p class="check__lead">Tick anything that sounds like your site. Be honest, nobody's watching.</p>
+          <ul class="check__list" id="check-list">
+            <li><label><input type="checkbox" value="Looks dated or hard to read on a phone"><span>It looks dated, or it's hard to read on a phone</span></label></li>
+            <li><label><input type="checkbox" value="No tap-to-call"><span>Customers can't tap to call you</span></label></li>
+            <li><label><input type="checkbox" value="Slow to load"><span>It takes more than a few seconds to load</span></label></li>
+            <li><label><input type="checkbox" value="Can't update it myself"><span>You can't update prices or photos yourself</span></label></li>
+            <li><label><input type="checkbox" value="Not found on local searches"><span>You don't show up when people nearby search</span></label></li>
+            <li><label><input type="checkbox" value="No online booking or quotes"><span>There's no way to book or ask for a quote online</span></label></li>
+          </ul>
+        </div>
+        <aside class="meter" aria-live="polite">
+          <p class="meter__count"><b id="meter-n">0</b> of 6</p>
+          <div class="meter__bar" aria-hidden="true"><span id="meter-bar"></span></div>
+          <p class="meter__msg" id="meter-msg">Tick anything that sounds familiar.</p>
+          <a class="btn btn--pink btn--lg btn--block" href="#start" id="meter-cta">Fix these in my free redesign
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </a>
+        </aside>
       </div>
-    </div>
+    </section>
 
-    <!-- ============ 3D ASSEMBLY ============
-         Seven floating windows, each a piece of one site, fly together as you scroll.
-         The niche picker then re-skins the finished site. -->
+    <!-- ============ 3D ASSEMBLY ============ -->
     <section class="assemble" id="see-it" aria-labelledby="assemble-title">
       <div class="assemble__sticky">
         <h2 class="assemble__title" id="assemble-title">Your new website is already built. Come see it.</h2>
-
         <div class="stage">
           <div class="site" data-niche="plumbing" role="img" aria-label="A finished website for a local business, assembled from floating pieces">
             <div class="site__chrome"><i></i><i></i><i></i><span class="site__url">flowrightplumbing.com</span></div>
@@ -128,7 +200,6 @@
             </div>
           </div>
         </div>
-
         <div class="assemble__foot">
           <p class="assemble__hint" aria-hidden="true">Keep scrolling</p>
           <div class="picker" role="group" aria-label="Show this website for a different trade">
@@ -143,183 +214,58 @@
       </div>
     </section>
 
-    <!-- ============ STATEMENT ============ -->
-    <section class="statement">
+    <!-- ============ KEEP / CHANGE ============ -->
+    <section class="keep">
       <div class="wrap">
-        <p class="statement__text">
-          A lot of local business websites were built years ago, and <mark>customers can tell</mark>.
-          We rebuild yours so it looks as good as the work you actually do, and we
-          <mark class="mark--cyan">show it to you first</mark>.
-        </p>
-        <ul class="promises">
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>
-            <h3>You see it before you pay</h3>
-            <p>We design a real preview of your new site, made for your business, at no cost.</p>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M13 2L4 14h7l-1 8 9-12h-7z"/></svg>
-            <h3>Live in 7 days</h3>
-            <p>Once you approve it, we finish it, test it on phones and launch within a week.</p>
-          </li>
-          <li>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11l9-8 9 8M5 10v10h14V10"/><path d="M10 20v-6h4v6"/></svg>
-            <h3>It's yours</h3>
-            <p>Your domain, your content, your site. If you ever leave, you take it with you.</p>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- ============ SERVICES ============ -->
-    <section class="services" id="services">
-      <div class="wrap">
-        <div class="section-head">
-          <h2>What we build</h2>
-        </div>
-        <ul class="svc">
-          <li class="svc__row">
-            <h3 class="svc__title">New websites</h3>
-            <p class="svc__desc">Designed from scratch around your business, not a template with your logo dropped in.</p>
-            <svg class="svc__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </li>
-          <li class="svc__row">
-            <h3 class="svc__title">Redesigns</h3>
-            <p class="svc__desc">Keep your domain and the Google rankings you've earned. Lose the dated look.</p>
-            <svg class="svc__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </li>
-          <li class="svc__row">
-            <h3 class="svc__title">Booking &amp; quotes</h3>
-            <p class="svc__desc">Let customers book a slot or ask for a quote at 11pm, straight from their phone.</p>
-            <svg class="svc__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </li>
-          <li class="svc__row">
-            <h3 class="svc__title">Local SEO</h3>
-            <p class="svc__desc">Pages written for the towns you serve, so people nearby find you before the next guy.</p>
-            <svg class="svc__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </li>
-          <li class="svc__row">
-            <h3 class="svc__title">Speed</h3>
-            <p class="svc__desc">Most of your visitors are on a phone, often on bad signal. Every site we build is made to load fast on one.</p>
-            <svg class="svc__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </li>
-          <li class="svc__row">
-            <h3 class="svc__title">Care plans</h3>
-            <p class="svc__desc">Updates, backups, a new photo or a price change. Email us and it's done.</p>
-            <svg class="svc__arrow" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </li>
-        </ul>
-      </div>
-    </section>
-
-    <!-- ============ WORK ============ -->
-    <section class="work" id="work">
-      <div class="wrap">
-        <div class="section-head section-head--split">
-          <h2>Concept sites for the trades we work with</h2>
-          <p class="section-head__aside">We're new, so there are no client launches to show yet. These are concepts we built to show the standard you'd get, and each one is labelled.</p>
-        </div>
-
-        <div class="work__grid">
-          <a class="case case--wide" href="#contact">
-            <div class="shot shot--roof">
-              <div class="shot__bar"><i></i><i></i><i></i><span>ridgelineroofing.com</span></div>
-              <div class="shot__body">
-                <p class="m-kicker">Roof repair &amp; replacement</p>
-                <p class="m-title">Storm damage?<br>We're up there<br>by tomorrow.</p>
-                <span class="m-btn">Book a free inspection</span>
-                <div class="m-roof" aria-hidden="true"><b></b></div>
-              </div>
-            </div>
-            <div class="case__meta">
-              <h3>Ridgeline Roofing</h3>
-              <p>Roofing</p>
-              <span class="tag">Concept</span>
-            </div>
-          </a>
-
-          <a class="case" href="#contact">
-            <div class="shot shot--dental">
-              <div class="shot__bar"><i></i><i></i><i></i><span>brightsidedental.com</span></div>
-              <div class="shot__body">
-                <p class="m-kicker">Family dentistry</p>
-                <p class="m-title">Same-week<br>appointments.</p>
-                <span class="m-btn">Book online</span>
-                <div class="m-smile" aria-hidden="true"></div>
-              </div>
-            </div>
-            <div class="case__meta">
-              <h3>Brightside Dental</h3>
-              <p>Dentist</p>
-              <span class="tag">Concept</span>
-            </div>
-          </a>
-
-          <a class="case" href="#contact">
-            <div class="shot shot--spa">
-              <div class="shot__bar"><i></i><i></i><i></i><span>glowmedspa.com</span></div>
-              <div class="shot__body">
-                <p class="m-title m-title--serif">Glow</p>
-                <p class="m-kicker">Facials, peels &amp; injectables</p>
-                <div class="m-arch" aria-hidden="true"></div>
-              </div>
-            </div>
-            <div class="case__meta">
-              <h3>Glow Med Spa</h3>
-              <p>Med spa</p>
-              <span class="tag">Concept</span>
-            </div>
-          </a>
-
-          <a class="case case--wide" href="#contact">
-            <div class="shot shot--plumb">
-              <div class="shot__bar"><i></i><i></i><i></i><span>flowrightplumbing.com</span></div>
-              <div class="shot__body">
-                <p class="m-title m-title--huge">Leak?<br>Fixed today.</p>
-                <div class="m-stats" aria-hidden="true"><span>24/7 call-outs</span><span>Upfront prices</span><span>Licensed &amp; insured</span></div>
-                <div class="m-drop" aria-hidden="true"></div>
-              </div>
-            </div>
-            <div class="case__meta">
-              <h3>FlowRight Plumbing</h3>
-              <p>Plumbing</p>
-              <span class="tag">Concept</span>
-            </div>
-          </a>
+        <h2 class="nb-h2">A new website, without losing what works</h2>
+        <div class="keep__grid">
+          <div class="keep__col">
+            <h3>What you keep</h3>
+            <ul>
+              <li>Your domain name</li>
+              <li>Your business email</li>
+              <li>Your Google rankings, with old pages redirected to new ones</li>
+              <li>Your phone number and the content that already brings in customers</li>
+            </ul>
+          </div>
+          <div class="keep__col keep__col--change">
+            <h3>What we change</h3>
+            <ul>
+              <li>How it looks, on every screen</li>
+              <li>How fast it loads</li>
+              <li>How easy it is to call, book or ask for a quote</li>
+              <li>How easy it is for you to update</li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- ============ PROCESS ============ -->
-    <section class="process" id="process">
+    <!-- ============ HOW IT WORKS ============ -->
+    <section class="how" id="how">
       <div class="wrap">
-        <div class="section-head">
-          <h2>How it works</h2>
-        </div>
-        <ol class="steps">
-          <li class="step">
-            <span class="step__num">01</span>
+        <h2 class="nb-h2">From your old site to your new one in four steps</h2>
+        <ol class="how__steps how__steps--4">
+          <li>
+            <span class="how__num">1</span>
+            <h3>Send us your website</h3>
+            <p>Just the address. We look at what you have and what works for your trade.</p>
+            <a class="how__link" href="#start">Do it now</a>
+          </li>
+          <li>
+            <span class="how__num">2</span>
             <h3>We build your preview</h3>
-            <p>Send us your current website, or just your business name. We design the new one.</p>
-            <span class="step__time">Free</span>
+            <p>Your redesigned website, ready to click through. It costs you nothing.</p>
           </li>
-          <li class="step">
-            <span class="step__num">02</span>
-            <h3>You review it</h3>
-            <p>Tell us what to change. We keep revising until it feels like your business.</p>
-            <span class="step__time">Your feedback</span>
+          <li>
+            <span class="how__num">3</span>
+            <h3>You review and approve</h3>
+            <p>Ask for changes. You pay the balance only once you approve the final site.</p>
           </li>
-          <li class="step">
-            <span class="step__num">03</span>
-            <h3>You approve &amp; pay</h3>
-            <p>You pay the balance only once you've approved the final site. No surprises.</p>
-            <span class="step__time">Only when happy</span>
-          </li>
-          <li class="step">
-            <span class="step__num">04</span>
-            <h3>You're live</h3>
-            <p>We launch it, connect your domain and set up Google so customers can find you.</p>
-            <span class="step__time">Within 7 days</span>
+          <li>
+            <span class="how__num">4</span>
+            <h3>We switch it over</h3>
+            <p>Live within 7 days on the same domain, with your old pages redirected.</p>
           </li>
         </ol>
       </div>
@@ -330,50 +276,58 @@
       <div class="wrap">
         <div class="section-head section-head--center">
           <h2>Prices, up front</h2>
+          <p class="pricing__today">What you pay today: <b>$0</b>. You pay only after you've approved your new site.</p>
         </div>
         <div class="plans">
           <article class="plan">
             <h3>Starter</h3>
-            <p class="plan__for">A clean, fast site for a new or small business</p>
+            <p class="plan__for">A fresh, fast version of a small site</p>
             <p class="plan__price"><small>from</small> $999</p>
             <ul>
-              <li>Up to 5 pages</li>
+              <li>Up to 5 pages redesigned</li>
               <li>Built for phones first</li>
-              <li>Contact form &amp; basic SEO</li>
-              <li>2 rounds of changes</li>
+              <li>Click-to-call &amp; quote form</li>
+              <li>Old pages redirected</li>
               <li>Live in 7 days</li>
             </ul>
-            <a class="btn btn--ghost btn--block" href="#contact">Start with a free preview</a>
+            <a class="btn btn--ghost btn--block" href="#start">Start with a free preview</a>
           </article>
           <article class="plan plan--featured">
-            <span class="plan__flag">Right for most</span>
+            <span class="plan__flag">Right for most redesigns</span>
             <h3>Growth</h3>
             <p class="plan__for">For businesses that want more calls and bookings</p>
             <p class="plan__price"><small>from</small> $2,499</p>
             <ul>
-              <li>Up to 12 pages</li>
+              <li>Up to 12 pages redesigned</li>
               <li>A page for each service and town</li>
               <li>Online booking or quote form</li>
+              <li>Speed and local SEO fixes</li>
               <li>Edit your own content</li>
-              <li>Local SEO &amp; Google setup</li>
               <li>30 days of free changes</li>
             </ul>
-            <a class="btn btn--pink btn--block" href="#contact">Start with a free preview</a>
+            <a class="btn btn--pink btn--block" href="#start">Start with a free preview</a>
           </article>
           <article class="plan">
             <h3>Custom</h3>
-            <p class="plan__for">Multiple locations, online stores and bigger builds</p>
+            <p class="plan__for">Large sites, multiple locations and online stores</p>
             <p class="plan__price">Let's talk</p>
             <ul>
               <li>As many pages as you need</li>
+              <li>Content moved over for you</li>
               <li>Online payments</li>
-              <li>Connections to your tools</li>
-              <li>Help with copy &amp; photos</li>
               <li>Priority care plan</li>
             </ul>
-            <a class="btn btn--ghost btn--block" href="#contact">Start with a free preview</a>
+            <a class="btn btn--ghost btn--block" href="#start">Start with a free preview</a>
           </article>
         </div>
+      </div>
+    </section>
+
+    <!-- ============ GUARANTEE ============ -->
+    <section class="promise">
+      <div class="wrap">
+        <p class="promise__big">You pay nothing until you love it.</p>
+        <p class="promise__small">Your current website stays live the whole time. If the redesign isn't right, we revise it. If it's still not for you, walk away.</p>
       </div>
     </section>
 
@@ -381,82 +335,114 @@
     <section class="faq" id="faq">
       <div class="wrap faq__inner">
         <div class="section-head">
-          <h2>Questions people ask us</h2>
+          <h2>Redesign questions, answered</h2>
         </div>
         <div class="faq__list">
           <details>
-            <summary>Is the preview really free?</summary>
-            <p>Yes. We build it before you pay anything. If it's not for you, you walk away and owe us nothing.</p>
+            <summary>Will I lose my Google rankings?</summary>
+            <p>We keep your domain, carry over the content that ranks, and redirect old page addresses to the new ones so Google can follow the move. Rankings can wobble for a few weeks after any redesign, and we'll keep an eye on it with you.</p>
           </details>
           <details>
-            <summary>What if I don't like the design?</summary>
+            <summary>Do I keep my domain and email?</summary>
+            <p>Yes. Your domain and email stay exactly as they are. We only change the website.</p>
+          </details>
+          <details>
+            <summary>What happens to my old website?</summary>
+            <p>It stays live until you approve the new one. Then we switch over and keep a backup of the old site.</p>
+          </details>
+          <details>
+            <summary>What if I don't like the redesign?</summary>
             <p>Tell us what feels off and we'll rework it. You only pay once you've approved the final site.</p>
           </details>
           <details>
-            <summary>Who owns the domain and the website?</summary>
-            <p>You do. The domain is registered in your name, and if you ever move on, the site goes with you.</p>
+            <summary>Who owns the new website?</summary>
+            <p>You do. If you ever move on, the site goes with you.</p>
           </details>
           <details>
             <summary>Where are you based?</summary>
             <p>Our team is in India. That's how we keep prices fair and get sites live in a week, and we're happy to talk on a call at a time that suits you.</p>
           </details>
-          <details>
-            <summary>Can I update the site myself?</summary>
-            <p>Yes. Changing text, photos and prices is simple, and we'll show you how. Or email us and we'll do it.</p>
-          </details>
         </div>
       </div>
     </section>
 
-    <!-- ============ CONTACT ============ -->
-    <section class="contact" id="contact">
-      <div class="wrap contact__inner">
-        <div class="contact__copy">
-          <h2 class="contact__title">Let's build something <em>marvelous</em>.</h2>
-          <p>Send us your business name and current website. We'll build a preview of your new site and email you the link.</p>
-          <a class="contact__mail" href="mailto:hello@marveloweb.com">hello@marveloweb.com</a>
+    <!-- ============ START: 2-step form ============ -->
+    <section class="start" id="start" data-sticky-hide>
+      <div class="wrap start__grid">
+        <div class="start__copy">
+          <h2 class="start__title">See <span id="echo-site">your website</span>, redesigned.</h2>
+          <p>Two quick steps and we start on your preview. Your current site stays exactly as it is until you say go.</p>
+          <ul class="assure assure--ink">
+            <li>Free preview</li>
+            <li>No card needed</li>
+            <li>Pay only if you love it</li>
+          </ul>
         </div>
-        <form class="form" id="contact-form" novalidate>
-          <div class="field-row">
-            <div class="field">
-              <label for="f-name">Your name</label>
-              <input id="f-name" name="name" type="text" autocomplete="name">
-            </div>
-            <div class="field">
-              <label for="f-email">Email</label>
-              <input id="f-email" name="email" type="email" autocomplete="email" required aria-describedby="f-email-err">
-              <p class="field__error" id="f-email-err"></p>
-            </div>
+
+        <form class="form funnel" id="funnel" novalidate data-subject="Free redesign preview" data-subject-field="website">
+          <div class="funnel__progress">
+            <p class="funnel__step">Step 1 of 2: your website</p>
+            <div class="funnel__bar" aria-hidden="true"><span></span></div>
           </div>
-          <div class="field-row">
+
+          <fieldset class="funnel__panel" data-label="Step 1 of 2: your website">
+            <legend class="sr">Your website</legend>
             <div class="field">
-              <label for="f-biz">Business name</label>
-              <input id="f-biz" name="business" type="text" autocomplete="organization">
+              <label for="s-site">Current website</label>
+              <input id="s-site" name="website" type="text" inputmode="url" autocapitalize="off" spellcheck="false" placeholder="yourbusiness.com" required aria-describedby="s-site-err" data-msg="Add your website address so we know what to redesign.">
+              <p class="field__error" id="s-site-err"></p>
             </div>
-            <div class="field">
-              <label for="f-city">City</label>
-              <input id="f-city" name="city" type="text" autocomplete="address-level2">
+            <div class="field-row">
+              <div class="field">
+                <label for="s-biz">Business name</label>
+                <input id="s-biz" name="business" type="text" autocomplete="organization" required aria-describedby="s-biz-err" data-msg="Add your business name.">
+                <p class="field__error" id="s-biz-err"></p>
+              </div>
+              <div class="field">
+                <label for="s-trade">What do you do?</label>
+                <select id="s-trade" name="trade">
+                  <option value="plumbing">Plumbing</option>
+                  <option value="hvac">HVAC</option>
+                  <option value="roofing">Roofing</option>
+                  <option value="dental">Dental</option>
+                  <option value="medspa">Med spa</option>
+                  <option value="other">Something else</option>
+                </select>
+              </div>
             </div>
-          </div>
-          <div class="field">
-            <label for="f-site">Current website <span class="opt">(if you have one)</span></label>
-            <input id="f-site" name="website" type="text" inputmode="url" placeholder="yourbusiness.com">
-          </div>
-          <fieldset class="field">
-            <legend>What kind of business?</legend>
-            <div class="chips">
-              <label><input type="radio" name="type" value="Plumbing"><span>Plumbing</span></label>
-              <label><input type="radio" name="type" value="HVAC"><span>HVAC</span></label>
-              <label><input type="radio" name="type" value="Roofing"><span>Roofing</span></label>
-              <label><input type="radio" name="type" value="Dental"><span>Dental</span></label>
-              <label><input type="radio" name="type" value="Med spa"><span>Med spa</span></label>
-              <label><input type="radio" name="type" value="Other"><span>Something else</span></label>
-            </div>
+            <input type="hidden" name="issues" id="s-issues" data-label="Warning signs they ticked">
+            <button class="btn btn--pink btn--lg btn--block" type="button" data-next>Next: where to send it
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
           </fieldset>
-          <button class="btn btn--pink btn--lg btn--block" type="submit">Get my free preview
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>
-          </button>
-          <p class="form__note" id="form-note" role="status"></p>
+
+          <fieldset class="funnel__panel" data-label="Step 2 of 2: where to send your preview" hidden>
+            <legend class="sr">Where to send your preview</legend>
+            <div class="field">
+              <label for="s-name">Your name</label>
+              <input id="s-name" name="name" type="text" autocomplete="name">
+            </div>
+            <div class="field">
+              <label for="s-email">Email</label>
+              <input id="s-email" name="email" type="email" autocomplete="email" required aria-describedby="s-email-err" data-msg="Enter an email we can send your preview to.">
+              <p class="field__error" id="s-email-err"></p>
+            </div>
+            <div class="field">
+              <label for="s-phone">Phone <span class="opt">(optional, for a quick call)</span></label>
+              <input id="s-phone" name="phone" type="tel" autocomplete="tel">
+            </div>
+            <button class="btn btn--pink btn--lg btn--block" type="submit">Get my free redesign
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button class="funnel__back" type="button" data-back>Back</button>
+          </fieldset>
+
+          <div class="funnel__done" hidden tabindex="-1">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.5 3.5L17 9"/></svg>
+            <p class="funnel__done-title">Almost there.</p>
+            <p>Your email app should open with the details for <b data-done-name>your website</b> filled in. Press send and we'll start on your redesign.</p>
+            <p class="funnel__done-small">Nothing opened? Email us at <a href="mailto:hello@marveloweb.com">hello@marveloweb.com</a>.</p>
+          </div>
         </form>
       </div>
     </section>
@@ -468,16 +454,11 @@
       <div class="footer__top">
         <p class="footer__tag">Websites people <em>marvel</em> at.</p>
         <nav class="footer__nav" aria-label="Footer">
-          <a href="#work">Work</a>
-          <a href="#process">How it works</a>
+          <a href="#how">How it works</a>
           <a href="#pricing">Pricing</a>
           <a href="#faq">FAQ</a>
-          <a href="#contact">Free preview</a>
-        </nav>
-        <nav class="footer__social" aria-label="Social">
-          <a href="#" aria-label="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="5"/><circle cx="12" cy="12" r="4"/><circle cx="17.5" cy="6.5" r=".6" fill="currentColor"/></svg></a>
-          <a href="#" aria-label="LinkedIn"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 10v7M8 7v.01M12 17v-4a2 2 0 014 0v4M12 10v7"/></svg></a>
-          <a href="#" aria-label="Facebook"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4h-3a4 4 0 00-4 4v3H7v4h3v6h4v-6h3l1-4h-4V8a0 0 0 010 0z"/></svg></a>
+          <a href="new-website.html">Get a new website</a>
+          <a href="mailto:hello@marveloweb.com">hello@marveloweb.com</a>
         </nav>
       </div>
       <p class="footer__word" aria-hidden="true">marveloweb<span>✦</span></p>
@@ -488,6 +469,12 @@
     </div>
   </footer>
 
-  <script src="main.js?v=7"></script>
+  <!-- Phones: the main action is always one tap away -->
+  <a class="sticky-cta" href="#start" aria-hidden="true" tabindex="-1">Get my free redesign
+    <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+  </a>
+
+  <script src="main.js?v=10"></script>
+  <script src="redesign.js?v=10"></script>
 </body>
 </html>
