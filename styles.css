@@ -185,13 +185,13 @@ em { font-family: var(--f-serif); font-style: italic; font-weight: 400; letter-s
   max-width: 920px; text-align: center; text-wrap: balance;
   font-size: clamp(1.9rem, 4.4vw, 3.7rem); line-height: 1.02; letter-spacing: -.04em; font-weight: 700;
 }
-.stage { width: 100%; display: grid; place-items: center; perspective: 1500px; perspective-origin: 50% 40%; min-height: 0; }
+/* the stage is a size container, so the site can fit whatever height the title and picker leave */
+.stage { position: relative; z-index: 1; width: 100%; height: 100%; container-type: size; display: grid; place-items: center; perspective: 1500px; perspective-origin: 50% 40%; min-height: 0; }
 .site {
   --built: 1;
   --s-bg: #EAF3FF; --s-ink: #0B2A4A; --s-accent: #1E7BD9; --s-soft: #CFE3FA;
   position: relative; container-type: inline-size;
-  /* fit the height left after the title (~2 lines), picker and padding */
-  width: min(940px, 86vw, calc((100svh - 340px) * 1.5)); aspect-ratio: 16 / 10.4;
+  width: min(940px, 86vw, calc(100cqh * 16 / 10.4)); aspect-ratio: 16 / 10.4;
   transform-style: preserve-3d; color: var(--s-ink);
 }
 /* frame + page background fade in as the pieces land */
@@ -285,6 +285,55 @@ em { font-family: var(--f-serif); font-style: italic; font-weight: 400; letter-s
 .js .assemble.is-built .assemble__hint { opacity: 0; transform: translateY(-10px); }
 .assemble__hint { display: none; }
 .js .assemble__hint { display: flex; }
+
+/* Phones: the pieces assemble into a mobile-shaped site (tall, stacked sections) instead of a
+   squeezed desktop one, so the finished result stays readable. Sizes are re-set in cqw because
+   the site box is much narrower here. */
+@media (max-width: 640px) {
+  .assemble__sticky { padding-top: 96px; gap: 8px; }
+  .site {
+    width: min(300px, 80vw, calc(100cqh * 9 / 16));
+    aspect-ratio: 9 / 16;
+  }
+  .site::before { border-radius: 6cqw; }
+  .site__chrome { height: 10cqw; gap: 1.6cqw; padding: 0 4cqw; border-radius: 6cqw 6cqw 0 0; }
+  .site__chrome i { width: 2.4cqw; height: 2.4cqw; }
+  .site__url { font-size: 3cqw; padding: .6cqw 4cqw; }
+  .site__body { inset: 10cqw 0 0 0; }
+
+  .piece { border-radius: calc(var(--f) * 3cqw); }
+  .piece::before {
+    height: 4.5cqw; border-radius: 3cqw 3cqw 0 0;
+    background: radial-gradient(circle at 3cqw 50%, #FF5F57 .9cqw, transparent 1cqw),
+                radial-gradient(circle at 6cqw 50%, #FEBC2E .9cqw, transparent 1cqw),
+                radial-gradient(circle at 9cqw 50%, #28C840 .9cqw, transparent 1cqw), #E3E3E8;
+  }
+  .piece--nav { height: 9%; padding: 0 5cqw; }
+  .piece--hero { top: 9%; width: 100%; height: 31%; padding: 0 6cqw; gap: 3cqw; }
+  .piece--visual { left: 0; top: 40%; width: 100%; height: 19%; }
+  .piece--card { left: 5%; width: 90%; height: 7.5%; flex-direction: row; align-items: center; justify-content: flex-start; gap: 3cqw; padding: 0 4cqw; }
+  .piece--card[data-piece="3"] { left: 5%; top: 60.5%; }
+  .piece--card[data-piece="4"] { left: 5%; top: 69%; }
+  .piece--card[data-piece="5"] { left: 5%; top: 77.5%; }
+  .piece--card i { display: none; }
+  .piece--cta { top: 86%; height: 14%; padding: 0 6cqw; gap: 3cqw; border-radius: 0 0 calc(6cqw * var(--built)) calc(6cqw * var(--built)); }
+
+  .p-logo { font-size: 4.2cqw; gap: 2cqw; }
+  .p-icon { width: 5cqw; height: 5cqw; }
+  .p-links { display: none; }
+  .p-pill { font-size: 3.2cqw; padding: 1.6cqw 3.6cqw; }
+  .piece--nav .p-pill { margin-left: auto; font-size: 2.8cqw; padding: 1.4cqw 3cqw; }
+  .p-pill--lg { font-size: 3.6cqw; padding: 2.2cqw 4.6cqw; }
+  .p-h { font-size: 9.6cqw; }
+  .site[data-niche="medspa"] .p-h { font-size: 11cqw; }
+  .p-sub { font-size: 3.5cqw; }
+  .p-big { width: auto; height: 62%; }
+  .p-chip { left: 5cqw; bottom: 4cqw; font-size: 3cqw; padding: 1.2cqw 3cqw; }
+  .p-dot { width: 6cqw; height: 6cqw; flex: none; }
+  .piece--card b { font-size: 4cqw; }
+  .piece--cta b { font-size: 3.8cqw; line-height: 1.25; }
+  .piece--cta .p-pill { font-size: 2.8cqw; padding: 1.4cqw 3cqw; }
+}
 
 /* ---------- statement ---------- */
 .statement { padding: clamp(80px, 11vw, 150px) 0 clamp(64px, 8vw, 110px); }

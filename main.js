@@ -68,6 +68,7 @@
     assemble.classList.add('is-built');
   } else {
     let built = false, visible = false, raf = 0, px = 0, py = 0;
+    const narrow = matchMedia('(max-width: 640px)');
 
     const frame = (now) => {
       raf = 0;
@@ -75,16 +76,22 @@
       const span = r.height - innerHeight;
       const p = span > 0 ? clamp01(-r.top / span) : 1;
       const w = site.offsetWidth, h = site.offsetHeight;
+      // On phones the site is tall and narrow: keep the scatter inside the screen, the depth shallower,
+      // and shrink pieces while they float so they grow into place instead of crowding the screen
+      // (yUp limits upward drift so nothing floats into the headline on a short screen)
+      const k = narrow.matches ? { x: 0.38, y: 0.3, yUp: 0.08, z: 0.35, r: 0.7, s: 0.32 } : { x: 1, y: 1, yUp: 1, z: 1, r: 1, s: 0 };
       let landed = 0;
 
       pieces.forEach((el, i) => {
         const s = scatter[i];
         const t = easeInOut(clamp01((p - 0.04 - i * 0.045) / 0.5));
         const f = 1 - t;
+        const fr = f * k.r;
         const drift = Math.sin(now / 1100 + i * 1.7) * 10 * f; // idle bobbing while it floats
         el.style.transform =
-          `translate3d(${(s.x * w * f).toFixed(1)}px, ${(s.y * h * f + drift).toFixed(1)}px, ${(s.z * f).toFixed(1)}px) ` +
-          `rotateX(${(s.rx * f).toFixed(2)}deg) rotateY(${(s.ry * f).toFixed(2)}deg) rotateZ(${(s.rz * f).toFixed(2)}deg)`;
+          `translate3d(${(s.x * k.x * w * f).toFixed(1)}px, ${(s.y * (s.y < 0 ? k.yUp : k.y) * h * f + drift).toFixed(1)}px, ${(s.z * k.z * f).toFixed(1)}px) ` +
+          `rotateX(${(s.rx * fr).toFixed(2)}deg) rotateY(${(s.ry * fr).toFixed(2)}deg) rotateZ(${(s.rz * fr).toFixed(2)}deg) ` +
+          `scale(${(1 - k.s * f).toFixed(3)})`;
         el.style.setProperty('--f', f.toFixed(3));
         if (t >= 1) landed++;
       });
@@ -112,6 +119,7 @@
     }).observe(assemble);
 
     assemble.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse') return; // a finger scrolling the page shouldn't tilt the site
       px = e.clientX / innerWidth - 0.5;
       py = e.clientY / innerHeight - 0.5;
     });
