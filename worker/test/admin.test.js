@@ -3,7 +3,7 @@ import { SELF, env } from 'cloudflare:test';
 import { listLeadKeys } from '../src/admin.js';
 
 const ORIGIN = 'https://marveloweb.com';
-const KEY = 'test-admin-key';
+const KEY = 'test-admin-key-0123456789abcdef';
 
 function getLeads({ key = KEY, ip = '4.4.4.4', origin = ORIGIN } = {}) {
   const headers = { 'cf-connecting-ip': ip };
@@ -12,7 +12,9 @@ function getLeads({ key = KEY, ip = '4.4.4.4', origin = ORIGIN } = {}) {
   return SELF.fetch('https://api.test/leads', { headers });
 }
 
-const REPORT = { id: 'r1', score: 55, verdict: 'Your website is holding you back.', categories: [{ key: 'speed', title: 'Speed on phones', score: 40, issues: [{ problem: 'Slow page', fix: 'f' }] }] };
+const FULL = { id: 'r1', score: 55, verdict: 'Your website is holding you back.', categories: [{ key: 'speed', title: 'Speed on phones', score: 40, issues: [{ problem: 'Slow page', fix: 'f' }] }] };
+
+const REPORT = { score: 55, verdict: FULL.verdict, categories: [{ key: 'speed', title: 'Speed on phones', score: 40, status: undefined, issues: FULL.categories[0].issues }], pitch: undefined };
 
 async function seed(id, over = {}) {
   await env.MW.put(`lead:${id}`, JSON.stringify({
@@ -53,7 +55,7 @@ test('successful requests are not counted against the limit', async () => {
 });
 
 test('correct key returns leads newest first with the right fields and the report', async () => {
-  await env.MW.put('report-id:r1', JSON.stringify(REPORT));
+  await env.MW.put('report-id:r1', JSON.stringify(FULL));
   await seed('old', { createdAt: 1000 });
   await seed('new', { createdAt: 3000, reportId: 'r1' });
   await seed('mid', { createdAt: 2000, reportId: 'missing' });
@@ -64,7 +66,7 @@ test('correct key returns leads newest first with the right fields and the repor
   expect(leads.map((l) => l.id)).toEqual(['new', 'mid', 'old']);
   expect(leads[0]).toEqual({
     id: 'new', createdAt: 3000, website: 'a.com', name: 'N', email: 'n@example.com', phone: '1', business: 'B',
-    trade: 'Plumbing', city: 'Austin, TX', issues: 'Slow site', report: REPORT,
+    trade: 'Plumbing', city: 'Austin, TX', issues: 'Slow site', extras: 'secret extras', report: JSON.parse(JSON.stringify(REPORT)),
   });
   expect(leads[1].report).toBeNull();
   expect(leads[2].report).toBeNull();
@@ -124,13 +126,41 @@ test('preflight allows the authorization header', async () => {
 });
 
 test("embedded reports are returned without any report-id reads; old leads fall back to one read", async () => {
-  await env.MW.put("report-id:old", JSON.stringify(REPORT));
-  await seed("emb", { createdAt: 3000, report: REPORT, reportId: "gone" });
+  await env.MW.put("report-id:old", JSON.stringify(FULL));
+  await seed("emb", { createdAt: 3000, report: FULL, reportId: "gone" });
   await seed("legacy", { createdAt: 2000, reportId: "old" });
   await seed("expired", { createdAt: 1000, reportId: "vanished" });
   const get = vi.spyOn(env.MW, "get");
   const { leads } = await (await getLeads()).json();
-  const reads = get.mock.calls.map((c) => c[0]).filter((k) => k.startsWith("report-id:"));
+  const reads = get.mock.calls.flatMap((c) => c[0]).filter((k) => k.startsWith("report-id:"));
   expect(reads.sort()).toEqual(["report-id:old", "report-id:vanished"]);
-  expect(leads.map((l) => l.report)).toEqual([REPORT, REPORT, null]);
+  const R = JSON.parse(JSON.stringify(REPORT));
+  expect(leads.map((l) => l.report)).toEqual([R, R, null]);
+});
+
+test('reads are bulk: few KV get calls for many leads, legacy reports in bulk too', async () => {
+  await env.MW.put('report-id:old', JSON.stringify(FULL));
+  await Promise.all(Array.from({ length: 250 }, (_, i) => seed('b' + i, { createdAt: i, reportId: i < 120 ? 'old' : null })));
+  const get = vi.spyOn(env.MW, 'get');
+  const res = await getLeads();
+  expect((await res.json()).leads).toHaveLength(250);
+  // 3 chunks of leads, plus one chunk for the single distinct legacy report
+  expect(get.mock.calls.length).toBeLessThanOrEqual(Math.ceil(250 / 100) + 1);
+  expect(get.mock.calls.every((c) => Array.isArray(c[0]))).toBe(true);
+});
+
+test('the report in the list is trimmed to the fields the page needs', async () => {
+  await seed('t1', { report: { ...FULL, id: 'x', url: 'u', city: 'c', categories: [{ key: 'rankings', title: 'R', score: 1, status: 'ok', depth: 10, results: [], issues: [], extra: 'no' }] } });
+  const { leads } = await (await getLeads()).json();
+  expect(Object.keys(leads[0].report).sort()).toEqual(['categories', 'score', 'verdict']);
+  expect(leads[0].report.categories[0]).toEqual({ key: 'rankings', title: 'R', score: 1, status: 'ok', depth: 10, results: [], issues: [] });
+});
+
+test('a too-short ADMIN_KEY fails closed with 401', async () => {
+  const { handleLeads } = await import('../src/admin.js');
+  const respond = (d, s) => new Response(JSON.stringify(d), { status: s });
+  const short = { ...env, ADMIN_KEY: 'short-key' };
+  const req = new Request('https://api.test/leads', { headers: { authorization: 'Bearer short-key' } });
+  expect((await handleLeads(req, short, null, respond)).status).toBe(401);
+  expect((await handleLeads(req, { ...env, ADMIN_KEY: undefined }, null, respond)).status).toBe(401);
 });

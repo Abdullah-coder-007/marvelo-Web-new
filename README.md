@@ -49,7 +49,7 @@ A Cloudflare Worker (`worker/`) powers the free website check on `redesign.html`
 
 ### Your leads page
 
-Open `https://marveloweb.com/leads.html` (the page is not linked from the site). Enter your admin key the first time; it is remembered on that device, and "Forget this device" clears it. You get a table of leads with name, email, phone, website, city, business type, warning signs and score. Click the + on a row to see the full report, use the search box to filter, and use "Download CSV" to save everything (opens in Excel or Google Sheets).
+Open `https://marveloweb.com/leads.html` (the page is not linked from the site). Always use that address rather than the github.io one: the browser remembers the key per site, so each address would ask again. Enter your admin key the first time; it is remembered on that device, and "Forget this device" clears it. You get a table of leads with name, email, phone, website, city, business type, warning signs and score. Click the + on a row to see the full report, use the search box to filter, and use "Download CSV" to save everything (opens in Excel or Google Sheets).
 
 To feed a CRM later, import the CSV, or have the CRM read `GET /leads` with the admin key.
 
@@ -68,7 +68,7 @@ To feed a CRM later, import the CSV, or have the CRM read `GET /leads` with the 
    npx wrangler secret put DATAFORSEO_PASSWORD
    npx wrangler secret put ADMIN_KEY
    ```
-   Make `ADMIN_KEY` a long random string (let a password manager generate it) and keep it there. Anyone with it can read your leads.
+   Make `ADMIN_KEY` a long random string, at least 24 characters and no spaces (let a password manager generate it), and keep it there. A shorter key is refused, so the leads page stays locked. Anyone with it can read your leads.
 3. `ALLOWED_ORIGINS` in `wrangler.toml` lists the sites that may call the Worker (comma separated). It holds the GitHub Pages address, `https://marveloweb.com` and `https://www.marveloweb.com`; add any other address that serves the site.
 4. Deploy with `npx wrangler deploy` (from `worker/`).
 5. Add the custom domain `api.marveloweb.com` to the Worker (Cloudflare dashboard, Workers, Settings, Domains & Routes).
@@ -78,6 +78,7 @@ To feed a CRM later, import the CSV, or have the CRM read `GET /leads` with the 
 
 - DataForSEO costs about 1 cent per check (5 searches, first page only). A cap of 200 checks per day limits the spend. Keep the DataForSEO account prepaid with auto top-up off, so that balance is a hard ceiling.
 - The Workers free plan allows 10 ms of CPU per request. If checks hit that limit, the Paid plan ($5/month) may be needed.
+- Very large lead lists (many thousands) may need the Paid plan too, because of the CPU limit.
 
 ### Tests
 

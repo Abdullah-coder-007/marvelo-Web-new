@@ -41,7 +41,7 @@ const API_BASE = '';
     const d = new Date(ms);
     return isNaN(d) ? '' : d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
   };
-  const haystack = (l) => [l.name, l.email, l.phone, l.website, l.city, l.business, l.trade, l.issues].join(' ').toLowerCase();
+  const haystack = (l) => [l.name, l.email, l.phone, l.website, l.city, l.business, l.trade, l.issues, l.extras].join(' ').toLowerCase();
 
   // ---------- table ----------
   function cellLink(href, label) {
@@ -64,7 +64,6 @@ const API_BASE = '';
       return box;
     }
     box.appendChild(text('p', 'leads__verdict', (r.verdict || '') + (typeof r.score === 'number' ? ' (score ' + r.score + ')' : '')));
-    if (r.url) box.appendChild(text('p', 'leads__muted', 'Checked: ' + r.url + (r.city ? ' in ' + r.city : '')));
     const grid = text('div', 'leads__cats', '');
     (Array.isArray(r.categories) ? r.categories : []).forEach((c) => {
       const card = text('div', 'leads__cat', '');
@@ -157,23 +156,23 @@ const API_BASE = '';
   // ---------- CSV ----------
   function csvCell(v) {
     let s = v === null || v === undefined ? '' : String(v);
-    if (/^[=+\-@\t]/.test(s)) s = "'" + s; // stop spreadsheets running it as a formula
+    if (/^[=+\-@\t\r]/.test(s)) s = "'" + s; // stop spreadsheets running it as a formula
     return /[",\r\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s;
   }
   function buildCsv(list) {
-    const head = ['Date', 'ID', 'Name', 'Email', 'Phone', 'Website', 'City', 'Business', 'Trade', 'Warning signs', 'Score', 'Verdict'];
+    const head = ['Date', 'ID', 'Name', 'Email', 'Phone', 'Website', 'City', 'Business', 'Trade', 'Warning signs', 'Notes', 'Score', 'Verdict'];
     const lines = [head.map(csvCell).join(',')];
     list.forEach((l) => {
       const s = score(l);
       lines.push([
-        new Date(l.createdAt).toISOString(), l.id, l.name, l.email, l.phone, l.website, l.city, l.business, l.trade, l.issues,
+        new Date(l.createdAt).toISOString(), l.id, l.name, l.email, l.phone, l.website, l.city, l.business, l.trade, l.issues, l.extras,
         s === null ? '' : s, l.report && l.report.verdict ? l.report.verdict : '',
       ].map(csvCell).join(','));
     });
     return lines.join('\r\n') + '\r\n';
   }
   function downloadCsv() {
-    const blob = new Blob(['﻿' + buildCsv(leads)], { type: 'text/csv;charset=utf-8' });
+    const blob = new Blob(['\uFEFF' + buildCsv(leads)], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -202,7 +201,7 @@ const API_BASE = '';
     let data;
     try { data = await res.json(); } catch (e) { data = null; }
     leads = data && Array.isArray(data.leads) ? data.leads : [];
-    leads.forEach((l) => { ['name', 'email', 'phone', 'website', 'city', 'business', 'trade', 'issues', 'id'].forEach((f) => { if (typeof l[f] !== 'string') l[f] = ''; }); });
+    leads.forEach((l) => { ['name', 'email', 'phone', 'website', 'city', 'business', 'trade', 'issues', 'extras', 'id'].forEach((f) => { if (typeof l[f] !== 'string') l[f] = ''; }); });
     render();
   }
 
