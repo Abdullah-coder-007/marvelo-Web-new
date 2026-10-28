@@ -142,10 +142,39 @@ const STARTER_PRICE = 999;
     unseenBox.classList.toggle('is-named', Boolean(name));
 
     updateWhatsApp(name);
+    updateMini(name || niches[key].brand, url, niches[key].icon);
   };
+
+  // ---------- phones: a live strip at the bottom mirrors the demo while it's out of sight ----------
+  const mini = document.querySelector('.mini-live');
+  const miniName = mini.querySelector('[data-mini-name]'), miniUrl = mini.querySelector('[data-mini-url]');
+  const phone = matchMedia('(max-width: 760px)');
+  let touched = false, builderSeen = false, demoSeen = false;
+  const updateMini = (name, url, icon) => {
+    miniName.textContent = name;
+    miniUrl.textContent = url;
+    mini.querySelector('[data-mini-icon]').setAttribute('d', icon);
+    mini.style.setProperty('--mini-accent', getComputedStyle(site).getPropertyValue('--s-accent'));
+    // a little bounce on each change, only while the strip is on screen (the animation would pull it into view)
+    if (mini.classList.contains('is-shown') && !reducedMotion) { mini.classList.remove('is-pinged'); void mini.offsetWidth; mini.classList.add('is-pinged'); }
+  };
+  const toggleMini = () => {
+    const show = phone.matches && touched && builderSeen && !demoSeen;
+    mini.classList.toggle('is-shown', show);
+    mini.tabIndex = show ? 0 : -1;
+  };
+  new IntersectionObserver(([en]) => { builderSeen = en.isIntersecting; toggleMini(); }).observe(builder);
+  // the demo counts as seen once a quarter of it is on screen
+  new IntersectionObserver(([en]) => { demoSeen = en.intersectionRatio > 0.25; toggleMini(); }, { threshold: [0, 0.25, 0.5] }).observe(site);
+  const touch = () => { if (!touched) { touched = true; toggleMini(); } };
+  mini.addEventListener('click', (e) => {
+    e.preventDefault();
+    site.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
+  });
 
   let typingTimer;
   nameInput.addEventListener('input', () => {
+    touch();
     render();
     site.classList.add('is-typing');
     clearTimeout(typingTimer);
@@ -153,6 +182,7 @@ const STARTER_PRICE = 999;
   });
   builder.addEventListener('change', (e) => {
     if (e.target.name !== 'trade') return;
+    touch();
     site.classList.add('is-swapping');
     setTimeout(() => { render(); site.classList.remove('is-swapping'); }, reducedMotion ? 0 : 220);
   });

@@ -301,5 +301,39 @@ html:has(.pick[open]) { overflow: hidden; }
   .payback__card { box-shadow: 6px 6px 0 var(--pink); }
   .how__time + .how__link { margin-left: 0; display: table; }
 }
+/* ---------- phones: live strip mirroring the demo, centred demo, press feedback ---------- */
+.mini-live { display: none; }
+@media (max-width: 760px) {
+  .mini-live {
+    position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 61;
+    display: flex; align-items: center; gap: 12px; min-height: 60px; padding: 8px 10px 8px 8px;
+    background: #fff; color: var(--ink); border: 2px solid var(--ink); border-radius: 18px;
+    box-shadow: 0 12px 30px -12px rgba(15, 15, 18, .55);
+    transform: translateY(150%); transition: transform .45s var(--expo);
+  }
+  .mini-live.is-shown { transform: none; }
+  .mini-live.is-pinged { animation: mini-ping .5s var(--back); }
+  .mini-live__icon { display: grid; place-items: center; flex: none; width: 42px; height: 42px; border-radius: 12px; background: var(--mini-accent, var(--pink)); transition: background .4s ease; }
+  .mini-live__icon svg { width: 22px; height: 22px; fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+  .mini-live__text { display: grid; min-width: 0; flex: 1; line-height: 1.25; }
+  .mini-live__text b { font-size: 15.5px; letter-spacing: -.01em; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-live__text span { font-family: var(--f-mono); font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .mini-live__go { display: inline-flex; align-items: center; gap: 4px; flex: none; min-height: 40px; padding: 0 12px; border-radius: 999px; background: var(--ink); color: var(--paper); font-size: 14px; font-weight: 700; }
+  .mini-live__go svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+  @keyframes mini-ping { 40% { transform: translateY(-6px) scale(1.02); } }
+
+  /* every tap gets a visible response */
+  .btn:active, .chips label:active span, .pick__path:active, .engines__tabs button:active, .speed button:active { transform: scale(.96); }
+  .chips span { transition: background var(--t-fast), color var(--t-fast), border-color var(--t-fast), transform var(--t-fast); }
+  .chips--light input:checked + span { animation: chip-pop .35s var(--back); }
+  @keyframes chip-pop { 50% { transform: scale(1.08); } }
+}
+@media (max-width: 640px) {
+  .nb-hero .demo-stage { display: grid; justify-items: center; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mini-live, .mini-live.is-pinged, .chips--light input:checked + span { animation: none; transition: none; }
+}
+
 /* the full stop stays on the same line as the rotating word */
 .start__title .keep { white-space: nowrap; color: var(--ink); }

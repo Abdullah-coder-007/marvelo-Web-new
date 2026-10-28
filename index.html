@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=10">
   <link rel="stylesheet" href="new.css?v=11">
-  <link rel="stylesheet" href="new-extras.css?v=2">
+  <link rel="stylesheet" href="new-extras.css?v=3">
   <script>
     (function () {
       var d = document.documentElement, seen = false;
@@ -134,8 +134,8 @@
           </form>
         </div>
 
-        <div class="nb-hero__demo hero-in">
-          <p class="demo-tag"><span class="dot" aria-hidden="true"></span> Live preview, it changes as you type</p>
+        <div class="nb-hero__demo hero-in" id="demo">
+          <p class="demo-tag"><span class="dot" aria-hidden="true"></span> Demo preview: a taste of the website you'll get</p>
           <div class="demo-stage">
             <div class="site" id="demo-site" data-niche="clinic" role="img" aria-label="A preview of a website for your business">
               <div class="site__chrome"><i></i><i></i><i></i><span class="site__url">yourbusiness.com</span></div>
@@ -600,8 +600,14 @@
   <a class="sticky-wa" data-wa href="#" target="_blank" rel="noopener" hidden aria-label="Message us on WhatsApp">
     <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20l1.3-3.9A8 8 0 1 1 8 18.7z"/><path d="M9 9.5c.3 1.6 1.9 3.7 4.2 4.7l1.3-1.2 1.8.9c-.2 1-1 1.7-2 1.7-3.4-.2-6.8-3.6-7-7 0-1 .7-1.8 1.7-2l.9 1.8z"/></svg>
   </a>
+  <!-- Phones: the demo sits below the builder, so this strip shows each change while they type -->
+  <a class="mini-live" href="#demo" aria-hidden="true" tabindex="-1">
+    <span class="mini-live__icon"><svg viewBox="0 0 24 24"><path data-mini-icon/></svg></span>
+    <span class="mini-live__text"><b data-mini-name>Harbor Family Clinic</b><span data-mini-url>harborfamilyclinic.com</span></span>
+    <span class="mini-live__go">See it <svg viewBox="0 0 24 24"><path d="M12 5v14M6 13l6 6 6-6"/></svg></span>
+  </a>
 
   <script src="main.js?v=11"></script>
-  <script src="new.js?v=12"></script>
+  <script src="new.js?v=13"></script>
 </body>
 </html>
