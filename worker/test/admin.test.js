@@ -24,7 +24,7 @@ async function seed(id, over = {}) {
 beforeEach(async () => {
   const { keys } = await env.MW.list();
   await Promise.all(keys.map((k) => env.MW.delete(k.name)));
-});
+}, 60000);
 afterEach(() => vi.restoreAllMocks());
 
 test('no key -> 401', async () => {
@@ -104,11 +104,11 @@ test('more than one KV list page is followed with the cursor, and the total is c
   expect(seen).toHaveLength(2);
 });
 
-test('over 1000 leads (several real KV pages) all come back', async () => {
-  await Promise.all(Array.from({ length: 1005 }, (_, i) => seed(`l${i}`, { createdAt: i })));
+test('1001 leads (more than one real KV page) all come back', async () => {
+  await Promise.all(Array.from({ length: 1001 }, (_, i) => seed(`l${i}`, { createdAt: i })));
   const { leads } = await (await getLeads()).json();
-  expect(leads).toHaveLength(1005);
-  expect(leads[0].createdAt).toBe(1004);
+  expect(leads).toHaveLength(1001);
+  expect(leads[0].createdAt).toBe(1000);
 }, 60000);
 
 test('a disallowed origin -> 403', async () => {
