@@ -1,3 +1,7 @@
+// Website check: while API_BASE is empty nothing below talks to the network and the old hand-off runs.
+const API_BASE = '';
+const TURNSTILE_SITE_KEY = '';
+
 // "I already have a website" page: before/after slider, website-address hand-off, warning-signs checklist.
 // Relies on window.MW from main.js; main.js also runs the 2-step form, sticky CTA and 3D assembly.
 (() => {
@@ -66,10 +70,140 @@
       return;
     }
     $('s-site').value = d;
+    if (API_BASE) { runCheck(d); return; }
     $('start').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
     setTimeout(() => $('s-biz').focus({ preventScroll: true }), reducedMotion ? 0 : 600);
   });
   $('s-site').addEventListener('input', (e) => { urlInput.value = e.target.value; showDomain(); });
+
+  // ---------- website check report ----------
+  const submitBtn = urlForm.querySelector('button[type="submit"]');
+  const reportEl = $('report');
+  const statusEl = $('report-status');
+  const stepsEl = $('report-steps');
+  const bodyEl = $('report-body');
+  const steps = [...stepsEl.children];
+  const MSG_UNREACHED = "We couldn't reach that website.";
+  const MSG_LATER = 'Please try again in a little while.';
+  let checking = false;
+  let tsPromise = null;
+
+  // Turnstile is only loaded once, and only when both constants are set
+  const loadTurnstile = () => (tsPromise ||= new Promise((resolve, reject) => {
+    const s = document.createElement('script');
+    s.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit';
+    s.async = true;
+    s.onload = () => resolve(window.turnstile);
+    s.onerror = () => { tsPromise = null; reject(new Error('turnstile')); };
+    document.head.appendChild(s);
+  }));
+  // A fresh token for every check (it only shows something if Cloudflare needs a click)
+  const getToken = async () => {
+    if (!TURNSTILE_SITE_KEY) return '';
+    const ts = await loadTurnstile();
+    return new Promise((resolve, reject) => {
+      const id = ts.render($('ts-box'), {
+        sitekey: TURNSTILE_SITE_KEY,
+        appearance: 'interaction-only',
+        callback: (t) => { resolve(t); setTimeout(() => ts.remove(id), 0); },
+        'error-callback': () => { reject(new Error('turnstile')); ts.remove(id); },
+      });
+    });
+  };
+
+  const text = (tag, cls, str) => {
+    const el = document.createElement(tag);
+    if (cls) el.className = cls;
+    el.textContent = str;
+    return el;
+  };
+  const showReport = () => {
+    reportEl.hidden = false;
+    reportEl.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+  };
+  const fail = (msg) => {
+    stepsEl.hidden = true;
+    bodyEl.hidden = true;
+    statusEl.classList.add('is-error');
+    statusEl.textContent = msg;
+    showReport();
+  };
+
+  const renderReport = (r) => {
+    $('report-score').textContent = typeof r.score === 'number' ? Math.round(r.score) : '–';
+    $('report-verdict').textContent = r.verdict || '';
+    const cards = $('report-cards');
+    cards.replaceChildren();
+    (r.categories || []).forEach((c) => {
+      const card = document.createElement('article');
+      card.className = 'rcard';
+      const head = document.createElement('div');
+      head.className = 'rcard__head';
+      head.appendChild(text('h3', 'rcard__title', c.title));
+      const na = c.status === 'unavailable' || typeof c.score !== 'number';
+      head.appendChild(text('p', 'rcard__score' + (na ? ' is-na' : ''), na ? "Couldn't check" : `${Math.round(c.score)}/100`));
+      card.appendChild(head);
+      const list = document.createElement('ul');
+      list.className = 'rcard__issues';
+      (!na && c.issues ? c.issues : []).forEach((i) => {
+        const li = document.createElement('li');
+        li.appendChild(text('p', 'rcard__problem', i.problem));
+        const fix = text('p', 'rcard__fix', ' ' + i.fix);
+        fix.prepend(text('b', '', 'How we fix it:'));
+        li.appendChild(fix);
+        list.appendChild(li);
+      });
+      if (list.children.length) card.appendChild(list);
+      else if (!na) card.appendChild(text('p', 'rcard__none', 'Nothing to fix here.'));
+      cards.appendChild(card);
+    });
+    window.MW.lastReportId = r.id;
+  };
+
+  async function runCheck(domain) {
+    if (checking) return;
+    checking = true;
+    submitBtn.disabled = true;
+    statusEl.classList.remove('is-error');
+    statusEl.textContent = 'Checking your website. This usually takes about 20 seconds.';
+    bodyEl.hidden = true;
+    steps.forEach((li) => li.classList.remove('is-done'));
+    stepsEl.hidden = false;
+    showReport();
+    const timers = [2000, 6000, 10000].map((ms, i) => setTimeout(() => steps[i].classList.add('is-done'), ms));
+    try {
+      const turnstileToken = await getToken();
+      const res = await fetch(`${API_BASE}/check`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: domain, turnstileToken }),
+      });
+      if (res.status === 429 || res.status === 403) { fail(MSG_LATER); return; }
+      if (!res.ok) { fail(MSG_UNREACHED); return; }
+      const report = await res.json();
+      if (!report || typeof report.score !== 'number') { fail(MSG_UNREACHED); return; }
+      timers.forEach(clearTimeout);
+      steps.forEach((li) => li.classList.add('is-done'));
+      renderReport(report);
+      stepsEl.hidden = true;
+      statusEl.textContent = 'Your report is ready.';
+      bodyEl.hidden = false;
+      showReport();
+    } catch (err) {
+      fail(MSG_UNREACHED);
+    } finally {
+      timers.forEach(clearTimeout);
+      checking = false;
+      submitBtn.disabled = false;
+    }
+  }
+
+  // "Enhance my website": the address is already in the form, so jump to the first empty field
+  $('report-enhance').addEventListener('click', () => {
+    $('start').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
+    const first = ['s-site', 's-biz'].map($).find((el) => !el.value.trim()) || $('s-biz');
+    setTimeout(() => first.focus({ preventScroll: true }), reducedMotion ? 0 : 600);
+  });
 
   // ---------- warning-signs checklist ----------
   const boxes = [...document.querySelectorAll('#check-list input')];

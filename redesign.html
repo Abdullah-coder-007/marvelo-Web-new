@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=10">
   <link rel="stylesheet" href="new.css?v=10">
-  <link rel="stylesheet" href="redesign.css?v=10">
+  <link rel="stylesheet" href="redesign.css?v=11">
   <script>
     (function () {
       var d = document.documentElement, seen = false;
@@ -75,9 +75,10 @@
             <label class="builder__label" for="u-site">Your current website</label>
             <input class="builder__input" id="u-site" name="website" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="yourbusiness.com" aria-describedby="u-site-err">
             <p class="field__error field__error--light" id="u-site-err"></p>
-            <button class="btn btn--pink btn--lg btn--block" type="submit">Show me my redesign
+            <button class="btn btn--pink btn--lg btn--block" type="submit">Check my website
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
+            <div id="ts-box" class="ts-box"></div>
             <ul class="assure">
               <li>Free preview</li>
               <li>Keep your domain and email</li>
@@ -140,6 +141,31 @@
               <input class="ba__range" type="range" min="0" max="100" value="50" aria-label="Compare the old and new website. Lower shows more of the new design.">
             </div>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ REPORT CARD: filled in by redesign.js when a website check runs ============ -->
+    <section class="report" id="report" aria-labelledby="report-title" hidden tabindex="-1">
+      <div class="wrap">
+        <h2 class="nb-h2" id="report-title">Your website check</h2>
+        <p class="report__status" id="report-status" aria-live="polite"></p>
+        <ol class="report__steps" id="report-steps" hidden>
+          <li>Opening your site</li>
+          <li>Measuring speed</li>
+          <li>Checking Google</li>
+          <li>Looking at design</li>
+          <li>Finding your call buttons</li>
+        </ol>
+        <div class="report__body" id="report-body" hidden>
+          <div class="report__top">
+            <p class="report__score"><b id="report-score">–</b><span>/100</span></p>
+            <p class="report__verdict" id="report-verdict"></p>
+          </div>
+          <div class="report__cards" id="report-cards"></div>
+          <button class="btn btn--pink btn--lg" type="button" id="report-enhance">Enhance my website
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+          </button>
         </div>
       </div>
     </section>
@@ -474,6 +500,6 @@
   </a>
 
   <script src="main.js?v=11"></script>
-  <script src="redesign.js?v=10"></script>
+  <script src="redesign.js?v=11"></script>
 </body>
 </html>
