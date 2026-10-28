@@ -1,0 +1,14 @@
+name = "marveloweb-api"
+main = "src/index.js"
+compatibility_date = "2026-10-01"
+
+[[kv_namespaces]]
+binding = "MW"
+id = "REPLACE_WITH_KV_ID"
+
+[triggers]
+crons = ["0 * * * *"]
+
+[vars]
+LEAD_EMAIL_TO = ""
+ALLOWED_ORIGINS = "https://abdullah-coder-007.github.io,https://marveloweb.com"
