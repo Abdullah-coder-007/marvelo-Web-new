@@ -4,10 +4,10 @@ const LOCAL_TYPE = /LocalBusiness|Plumber|Electrician|Dentist|Restaurant|Store|C
 const clamp = (n) => Math.max(0, Math.min(100, n));
 const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
 
-function verdictFor(score) {
-  if (score >= 85) return 'Your website is in great shape.';
-  if (score >= 70) return 'Your website is doing okay, but it could win you more customers.';
-  return 'Your website is holding you back.';
+export function verdictFor(score) {
+  if (score < 50) return "Your website is costing you customers.";
+  if (score < 80) return "Your website is holding you back.";
+  return "A solid start. Here's what's left.";
 }
 
 // Each check: [failed?, points, problem, fix]

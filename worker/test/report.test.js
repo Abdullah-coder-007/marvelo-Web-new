@@ -1,5 +1,5 @@
 import { describe, expect, test } from 'vitest';
-import { buildReport } from '../src/report.js';
+import { buildReport, verdictFor } from '../src/report.js';
 import { runPsi } from '../src/psi.js';
 
 const psi = { performance: 42, seo: 80, accessibility: 70, bestPractices: 90, lcpMs: 6200, audits: {} };
@@ -51,6 +51,13 @@ test('LocalBusiness subtype counts and old copyright fails', () => {
   const r = buildReport('https://r.example/', f, null, new Date('2026-10-28'));
   expect(scores(r).google).toBe(100);
   expect(scores(r).design).toBe(66);
+});
+
+test('verdict boundaries', () => {
+  expect(verdictFor(49)).toBe('Your website is costing you customers.');
+  expect(verdictFor(50)).toBe('Your website is holding you back.');
+  expect(verdictFor(79)).toBe('Your website is holding you back.');
+  expect(verdictFor(80)).toBe("A solid start. Here's what's left.");
 });
 
 describe('runPsi', () => {
