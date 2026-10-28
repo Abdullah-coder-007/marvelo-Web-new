@@ -50,6 +50,9 @@ const TURNSTILE_SITE_KEY = '';
   const urlInput = $('u-site');
   const urlErr = $('u-site-err');
   const echo = $('echo-site');
+  const cityInput = $('u-city');
+  const cityErr = $('u-city-err');
+  if (API_BASE) $('u-city-wrap').hidden = false; // the city is only asked for while the check is switched on
   const domainOf = (s) => s.trim().toLowerCase().replace(/^[a-z]+:\/\//, '').replace(/^www\./, '').split(/[/?#\s]/)[0];
   const showDomain = () => {
     const d = domainOf(urlInput.value);
@@ -59,6 +62,9 @@ const TURNSTILE_SITE_KEY = '';
   urlInput.addEventListener('input', () => {
     showDomain();
     if (urlInput.getAttribute('aria-invalid') === 'true') { urlInput.setAttribute('aria-invalid', 'false'); urlErr.textContent = ''; }
+  });
+  cityInput.addEventListener('input', () => {
+    if (cityInput.getAttribute('aria-invalid') === 'true') { cityInput.setAttribute('aria-invalid', 'false'); cityErr.textContent = ''; }
   });
 
   urlForm.addEventListener('submit', (e) => {
@@ -71,8 +77,17 @@ const TURNSTILE_SITE_KEY = '';
       urlInput.focus();
       return;
     }
+    const city = cityInput.value.trim();
+    if (API_BASE && !city) {
+      cityInput.setAttribute('aria-invalid', 'true');
+      cityErr.textContent = 'Add your city, like Columbus, OH.';
+      cityInput.focus();
+      return;
+    }
+    cityInput.setAttribute('aria-invalid', 'false');
+    cityErr.textContent = '';
     $('s-site').value = d;
-    if (API_BASE) { runCheck(d); return; }
+    if (API_BASE) { runCheck(d, city); return; }
     $('start').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
     setTimeout(() => $('s-biz').focus({ preventScroll: true }), reducedMotion ? 0 : 600);
   });
@@ -147,6 +162,60 @@ const TURNSTILE_SITE_KEY = '';
     reportEl.focus({ preventScroll: true });
   };
 
+  // ---------- live preview (WordPress mshots screenshot) ----------
+  const live = $('live');
+  const liveImg = $('live-img');
+  const livePanel = $('live-panel');
+  let liveTimer = null;
+  let baMoved = false;
+  const moveBeforeAfter = () => {
+    if (baMoved) return;
+    baMoved = true;
+    $('ba-after-slot').appendChild($('ba-wrap')); // a DOM move, so the slider's listeners keep working
+    $('ba-after').hidden = false;
+  };
+  const showLive = (domain) => {
+    clearTimeout(liveTimer);
+    $('live-url').textContent = domain;
+    $('live-domain').textContent = domain;
+    livePanel.hidden = true;
+    live.hidden = false;
+    moveBeforeAfter();
+    const src = `https://s.wordpress.com/mshots/v1/${encodeURIComponent('https://' + domain)}?w=1200&h=800`;
+    let retried = false;
+    // mshots may answer with a small placeholder first; a real screenshot is wide
+    const good = () => liveImg.complete && liveImg.naturalWidth >= 600;
+    liveImg.onload = () => { livePanel.hidden = true; };
+    liveImg.onerror = () => { if (retried) livePanel.hidden = false; };
+    liveImg.src = src;
+    liveTimer = setTimeout(() => {
+      if (good()) return;
+      retried = true;
+      liveImg.src = `${src}&r=2`;
+      liveTimer = setTimeout(() => { if (!good()) livePanel.hidden = false; }, 6000);
+    }, 4000);
+  };
+
+  let lastDomain = '';
+  let lastCity = '';
+  const renderRankings = (card, c) => {
+    const table = document.createElement('table');
+    table.className = 'rcard__rank';
+    const head = table.createTHead().insertRow();
+    head.appendChild(text('th', '', 'Search')).scope = 'col';
+    head.appendChild(text('th', '', 'Position')).scope = 'col';
+    const none = typeof c.depth === 'number' ? `Not in the top ${c.depth}` : 'Not on the first page';
+    const tb = table.createTBody();
+    (c.results || []).forEach((x) => {
+      const row = tb.insertRow();
+      row.appendChild(text('td', '', x.keyword));
+      row.appendChild(text('td', '', typeof x.position === 'number' ? `#${x.position}` : none));
+    });
+    card.appendChild(table);
+    const inMaps = (c.results || []).some((x) => x.inMaps);
+    card.appendChild(text('p', 'rcard__maps', `Shows on Google Maps: ${inMaps ? 'Yes' : 'No'}`));
+  };
+
   const renderReport = (r) => {
     $('report-score').textContent = typeof r.score === 'number' ? Math.round(r.score) : '–';
     $('report-verdict').textContent = r.verdict || '';
@@ -161,6 +230,15 @@ const TURNSTILE_SITE_KEY = '';
       const na = c.status === 'unavailable' || typeof c.score !== 'number';
       head.appendChild(text('p', 'rcard__score' + (na ? ' is-na' : ''), na ? "Couldn't check" : `${Math.round(c.score)}/100`));
       card.appendChild(head);
+      if (na) {
+        // the server explains why in its first issue; show that text as it is
+        const why = (c.issues && c.issues[0]) || {};
+        card.appendChild(text('p', 'rcard__note', why.problem || "We couldn't check this one."));
+        if (why.fix) card.appendChild(text('p', 'rcard__note', why.fix));
+        cards.appendChild(card);
+        return;
+      }
+      if (c.key === 'rankings') renderRankings(card, c);
       const list = document.createElement('ul');
       list.className = 'rcard__issues';
       (!na && c.issues ? c.issues : []).forEach((i) => {
@@ -172,16 +250,36 @@ const TURNSTILE_SITE_KEY = '';
         list.appendChild(li);
       });
       if (list.children.length) card.appendChild(list);
-      else if (!na) card.appendChild(text('p', 'rcard__none', 'Nothing to fix here.'));
+      else if (c.key !== 'rankings' || !(c.results || []).length) card.appendChild(text('p', 'rcard__none', 'Nothing to fix here.'));
       cards.appendChild(card);
     });
+    // pitch
+    const pitch = r.pitch || {};
+    const pts = Array.isArray(pitch.points) ? pitch.points : [];
+    $('report-pitch').hidden = !pts.length;
+    $('pitch-title').textContent = pitch.headline || "Here's what's costing you customers";
+    const pl = $('pitch-list');
+    pl.replaceChildren();
+    pts.forEach((p) => {
+      const li = document.createElement('li');
+      li.appendChild(text('p', 'pitch__problem', p.problem));
+      li.appendChild(text('p', 'pitch__fix', p.fix));
+      pl.appendChild(li);
+    });
+    // print-only header
+    $('print-site').textContent = lastDomain;
+    $('print-city').textContent = r.city || lastCity;
+    $('print-date').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     window.MW.lastReportId = r.id;
   };
 
-  async function runCheck(domain) {
+  async function runCheck(domain, city) {
     if (checking) return;
     checking = true;
     window.MW.lastReportId = null; // never leave a stale id for the lead form
+    lastDomain = domain;
+    lastCity = city;
+    showLive(domain);
     submitBtn.disabled = true;
     statusEl.classList.remove('is-error');
     bodyEl.hidden = true;
@@ -198,7 +296,7 @@ const TURNSTILE_SITE_KEY = '';
       const res = await fetch(`${API_BASE}/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: domain, turnstileToken }),
+        body: JSON.stringify({ url: domain, city, turnstileToken }),
         signal: abort.signal,
       });
       if (res.status === 429 || res.status === 403) { fail(MSG_LATER); return; }
@@ -253,12 +351,26 @@ const TURNSTILE_SITE_KEY = '';
     };
   }
 
-  // "Enhance my website": the address is already in the form, so jump to the first empty field
+  // "Fix my website": the address and city go into the form, then jump to the first empty field
   $('report-enhance').addEventListener('click', () => {
+    const f = $('funnel');
+    if (lastDomain) $('s-site').value = lastDomain;
+    if (lastCity) {
+      let hid = f.querySelector('input[name="city"]');
+      if (!hid) {
+        hid = document.createElement('input');
+        hid.type = 'hidden';
+        hid.name = 'city';
+        hid.dataset.label = 'City';
+        f.appendChild(hid);
+      }
+      hid.value = lastCity;
+    }
     $('start').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
     const first = ['s-site', 's-biz'].map($).find((el) => !el.value.trim()) || $('s-biz');
     setTimeout(() => first.focus({ preventScroll: true }), reducedMotion ? 0 : 600);
   });
+  $('report-print').addEventListener('click', () => window.print());
 
   // ---------- warning-signs checklist ----------
   const boxes = [...document.querySelectorAll('#check-list input')];

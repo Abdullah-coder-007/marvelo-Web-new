@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=10">
   <link rel="stylesheet" href="new.css?v=10">
-  <link rel="stylesheet" href="redesign.css?v=12">
+  <link rel="stylesheet" href="redesign.css?v=13">
   <script>
     (function () {
       var d = document.documentElement, seen = false;
@@ -75,6 +75,11 @@
             <label class="builder__label" for="u-site">Your current website</label>
             <input class="builder__input" id="u-site" name="website" type="text" inputmode="url" autocomplete="url" autocapitalize="off" spellcheck="false" placeholder="yourbusiness.com" aria-describedby="u-site-err">
             <p class="field__error field__error--light" id="u-site-err"></p>
+            <div class="builder__city" id="u-city-wrap" hidden>
+              <label class="builder__label" for="u-city">Your city</label>
+              <input class="builder__input" id="u-city" name="city" type="text" autocomplete="address-level2" placeholder="e.g. Columbus, OH" aria-describedby="u-city-err">
+              <p class="field__error field__error--light" id="u-city-err"></p>
+            </div>
             <button class="btn btn--pink btn--lg btn--block" type="submit">Check my website
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
@@ -88,6 +93,17 @@
 
         <!-- Before/after: drag (or use arrow keys) to compare. Both address bars show the visitor's domain once typed. -->
         <div class="nb-hero__demo hero-in">
+          <figure class="live" id="live" hidden>
+            <div class="live__frame">
+              <div class="live__chrome"><i></i><i></i><i></i><span class="live__url" id="live-url"></span></div>
+              <div class="live__screen">
+                <img class="live__img" id="live-img" alt="" width="1200" height="800" referrerpolicy="no-referrer">
+                <div class="live__panel" id="live-panel" hidden><b id="live-domain"></b><span>Preview not available</span></div>
+              </div>
+            </div>
+            <figcaption class="live__cap">Your website as visitors see it today</figcaption>
+          </figure>
+          <div class="ba-wrap" id="ba-wrap">
           <p class="demo-tag"><span class="dot" aria-hidden="true"></span> Drag to compare</p>
           <div class="ba" id="ba" style="--pos: 50%">
             <div class="ba__view">
@@ -140,6 +156,7 @@
               <input class="ba__range" type="range" min="0" max="100" value="50" aria-label="Compare the old and new website. Lower shows more of the new design.">
             </div>
           </div>
+          </div>
         </div>
       </div>
     </section>
@@ -158,17 +175,34 @@
           <li>Finding your call buttons</li>
         </ol>
         <div class="report__body" id="report-body" hidden>
+          <div class="report__print-head">
+            <div class="report__print-brand">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 1l2.9 8.1L23 12l-8.1 2.9L12 23l-2.9-8.1L1 12l8.1-2.9z"/></svg>
+              <span>marvelo<b>web</b></span>
+            </div>
+            <p class="report__print-title">Website report</p>
+            <p class="report__print-meta"><span>Website: <b id="print-site"></b></span> <span>City: <b id="print-city"></b></span> <span>Date: <b id="print-date"></b></span></p>
+          </div>
           <div class="report__top">
             <p class="report__score"><b id="report-score">–</b><span>/100</span></p>
             <p class="report__verdict" id="report-verdict"></p>
           </div>
           <div class="report__cards" id="report-cards"></div>
-          <button class="btn btn--pink btn--lg" type="button" id="report-enhance">Enhance my website
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-          </button>
+          <div class="pitch" id="report-pitch" hidden>
+            <h3 class="pitch__title" id="pitch-title"></h3>
+            <ol class="pitch__list" id="pitch-list"></ol>
+            <div class="pitch__actions">
+              <button class="btn btn--pink btn--lg" type="button" id="report-enhance">Fix my website
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+              </button>
+              <button class="btn btn--ghost btn--lg" type="button" id="report-print">Download report (PDF)</button>
+            </div>
+          </div>
+          <p class="report__print-foot">Prepared by MarveloWeb · marveloweb.com · hello@marveloweb.com</p>
         </div>
       </div>
     </section>
+    <section class="ba-after" id="ba-after" aria-label="Before and after example" hidden><div class="wrap" id="ba-after-slot"></div></section>
 
     <!-- ============ WARNING SIGNS CHECKLIST ============ -->
     <section class="check" id="check">
@@ -467,8 +501,7 @@
           <div class="funnel__done" hidden tabindex="-1">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.5 3.5L17 9"/></svg>
             <div data-done-sent hidden>
-              <p class="funnel__done-title">Thanks, we're on it.</p>
-              <p>Your custom preview is being built. We'll email it to you within 24 hours.</p>
+              <p class="funnel__done-title">Thanks! We'll send your free redesign plan within 24 hours.</p>
             </div>
             <div data-done-mail>
               <p class="funnel__done-title">Almost there.</p>
@@ -508,6 +541,6 @@
   </a>
 
   <script src="main.js?v=12"></script>
-  <script src="redesign.js?v=14"></script>
+  <script src="redesign.js?v=15"></script>
 </body>
 </html>
