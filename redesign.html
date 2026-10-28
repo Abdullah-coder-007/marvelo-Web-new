@@ -453,20 +453,28 @@
               <p class="field__error" id="s-email-err"></p>
             </div>
             <div class="field">
-              <label for="s-phone">Phone <span class="opt">(optional, for a quick call)</span></label>
-              <input id="s-phone" name="phone" type="tel" autocomplete="tel">
+              <label for="s-phone">Phone or WhatsApp</label>
+              <input id="s-phone" name="phone" type="tel" autocomplete="tel" required aria-describedby="s-phone-err" data-msg="Add a number so we can reach you about your preview.">
+              <p class="field__error" id="s-phone-err"></p>
             </div>
             <button class="btn btn--pink btn--lg btn--block" type="submit">Get my free redesign
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
+            <p class="funnel__done-small">We only use your details to send your preview.</p>
             <button class="funnel__back" type="button" data-back>Back</button>
           </fieldset>
 
           <div class="funnel__done" hidden tabindex="-1">
             <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M7 12.5l3.5 3.5L17 9"/></svg>
-            <p class="funnel__done-title">Almost there.</p>
-            <p>Your email app should open with the details for <b data-done-name>your website</b> filled in. Press send and we'll start on your redesign.</p>
-            <p class="funnel__done-small">Nothing opened? Email us at <a href="mailto:hello@marveloweb.com">hello@marveloweb.com</a>.</p>
+            <div data-done-sent hidden>
+              <p class="funnel__done-title">Thanks, we're on it.</p>
+              <p>Your custom preview is being built. We'll email it to you within 24 hours.</p>
+            </div>
+            <div data-done-mail>
+              <p class="funnel__done-title">Almost there.</p>
+              <p>Your email app should open with the details for <b data-done-name>your website</b> filled in. Press send and we'll start on your redesign.</p>
+              <p class="funnel__done-small">Nothing opened? Email us at <a href="mailto:hello@marveloweb.com">hello@marveloweb.com</a>.</p>
+            </div>
           </div>
         </form>
       </div>
@@ -499,7 +507,7 @@
     <svg viewBox="0 0 24 24"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
   </a>
 
-  <script src="main.js?v=11"></script>
-  <script src="redesign.js?v=13"></script>
+  <script src="main.js?v=12"></script>
+  <script src="redesign.js?v=14"></script>
 </body>
 </html>

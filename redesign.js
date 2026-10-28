@@ -224,6 +224,35 @@ const TURNSTILE_SITE_KEY = '';
     }
   }
 
+  // Send the finished form to the server. Resolves true only on a 202; every other outcome is false so main.js falls back to email.
+  if (API_BASE) {
+    window.MW.sendLead = async (form) => {
+      const abort = new AbortController();
+      let timer;
+      try {
+        const data = {};
+        [...form.elements].forEach((el) => {
+          if (!el.name || (el.type === 'checkbox' || el.type === 'radio') && !el.checked) return;
+          data[el.name] = el.value.trim();
+        });
+        data.reportId = window.MW.lastReportId || null;
+        data.turnstileToken = await getToken();
+        timer = setTimeout(() => abort.abort(), 20000);
+        const res = await fetch(`${API_BASE}/enhance`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+          signal: abort.signal,
+        });
+        return res.status === 202;
+      } catch (e) {
+        return false;
+      } finally {
+        clearTimeout(timer);
+      }
+    };
+  }
+
   // "Enhance my website": the address is already in the form, so jump to the first empty field
   $('report-enhance').addEventListener('click', () => {
     $('start').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });

@@ -237,13 +237,28 @@
       return lines;
     };
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!validate(panels[at - 1])) return;
+      const submitBtn = form.querySelector('button[type="submit"]');
+      if (submitBtn && submitBtn.disabled) return;
       const subjectFrom = form.elements[form.dataset.subjectField];
       const who = (subjectFrom && subjectFrom.value.trim()) || 'new enquiry';
-      const body = [form.dataset.subject, '', ...answers()].join('\n');
-      window.location.href = `mailto:${TO}?subject=${encodeURIComponent(`${form.dataset.subject}: ${who}`)}&body=${encodeURIComponent(body)}`;
+      // Pages that define window.MW.sendLead (redesign) try the server first; anything else, or a failure, uses email
+      let sent = false;
+      if (window.MW && typeof window.MW.sendLead === 'function') {
+        if (submitBtn) submitBtn.disabled = true;
+        sent = await window.MW.sendLead(form).catch(() => false);
+        if (submitBtn) submitBtn.disabled = false;
+      }
+      const sentBox = done.querySelector('[data-done-sent]');
+      const mailBox = done.querySelector('[data-done-mail]');
+      if (!sent) {
+        const body = [form.dataset.subject, '', ...answers()].join('\n');
+        window.location.href = `mailto:${TO}?subject=${encodeURIComponent(`${form.dataset.subject}: ${who}`)}&body=${encodeURIComponent(body)}`;
+      }
+      if (sentBox) sentBox.hidden = !sent;
+      if (mailBox) mailBox.hidden = Boolean(sent);
 
       panels.forEach((p) => (p.hidden = true));
       form.querySelector('.funnel__progress').hidden = true;
