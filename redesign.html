@@ -14,7 +14,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,700;12..96,800&family=Instrument+Serif:ital@0;1&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css?v=10">
   <link rel="stylesheet" href="new.css?v=10">
-  <link rel="stylesheet" href="redesign.css?v=13">
+  <link rel="stylesheet" href="redesign.css?v=14">
   <script>
     (function () {
       var d = document.documentElement, seen = false;
@@ -191,12 +191,12 @@
           <div class="pitch" id="report-pitch" hidden>
             <h3 class="pitch__title" id="pitch-title"></h3>
             <ol class="pitch__list" id="pitch-list"></ol>
-            <div class="pitch__actions">
-              <button class="btn btn--pink btn--lg" type="button" id="report-enhance">Fix my website
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
-              </button>
-              <button class="btn btn--ghost btn--lg" type="button" id="report-print">Download report (PDF)</button>
-            </div>
+          </div>
+          <div class="pitch__actions">
+            <button class="btn btn--pink btn--lg" type="button" id="report-enhance">Fix my website
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+            </button>
+            <button class="btn btn--ghost btn--lg" type="button" id="report-print">Download report (PDF)</button>
           </div>
           <p class="report__print-foot">Prepared by MarveloWeb · marveloweb.com · hello@marveloweb.com</p>
         </div>
@@ -488,13 +488,13 @@
             </div>
             <div class="field">
               <label for="s-phone">Phone or WhatsApp</label>
-              <input id="s-phone" name="phone" type="tel" autocomplete="tel" required aria-describedby="s-phone-err" data-msg="Add a number so we can reach you about your preview.">
+              <input id="s-phone" name="phone" type="tel" autocomplete="tel" required aria-describedby="s-phone-err" data-msg="Add a number so we can reach you about your redesign.">
               <p class="field__error" id="s-phone-err"></p>
             </div>
             <button class="btn btn--pink btn--lg btn--block" type="submit">Get my free redesign
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
             </button>
-            <p class="funnel__done-small">We only use your details to send your preview.</p>
+            <p class="funnel__done-small">We only use your details to contact you about your redesign.</p>
             <button class="funnel__back" type="button" data-back>Back</button>
           </fieldset>
 
@@ -541,6 +541,6 @@
   </a>
 
   <script src="main.js?v=12"></script>
-  <script src="redesign.js?v=15"></script>
+  <script src="redesign.js?v=16"></script>
 </body>
 </html>

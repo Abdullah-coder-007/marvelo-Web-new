@@ -216,6 +216,23 @@ const TURNSTILE_SITE_KEY = '';
     card.appendChild(text('p', 'rcard__maps', `Shows on Google Maps: ${inMaps ? 'Yes' : 'No'}`));
   };
 
+  // address and city go into the funnel (the city as a hidden field, so the lead email carries it)
+  const fillFunnel = () => {
+    const f = $('funnel');
+    if (lastDomain) $('s-site').value = lastDomain;
+    if (lastCity) {
+      let hid = f.querySelector('input[name="city"]');
+      if (!hid) {
+        hid = document.createElement('input');
+        hid.type = 'hidden';
+        hid.name = 'city';
+        hid.dataset.label = 'City';
+        f.appendChild(hid);
+      }
+      hid.value = lastCity;
+    }
+  };
+
   const renderReport = (r) => {
     $('report-score').textContent = typeof r.score === 'number' ? Math.round(r.score) : '–';
     $('report-verdict').textContent = r.verdict || '';
@@ -238,7 +255,7 @@ const TURNSTILE_SITE_KEY = '';
         cards.appendChild(card);
         return;
       }
-      if (c.key === 'rankings') renderRankings(card, c);
+      if (c.key === 'rankings' && (c.results || []).length) renderRankings(card, c);
       const list = document.createElement('ul');
       list.className = 'rcard__issues';
       (!na && c.issues ? c.issues : []).forEach((i) => {
@@ -270,6 +287,7 @@ const TURNSTILE_SITE_KEY = '';
     $('print-site').textContent = lastDomain;
     $('print-city').textContent = r.city || lastCity;
     $('print-date').textContent = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+    fillFunnel();
     window.MW.lastReportId = r.id;
   };
 
@@ -353,19 +371,7 @@ const TURNSTILE_SITE_KEY = '';
 
   // "Fix my website": the address and city go into the form, then jump to the first empty field
   $('report-enhance').addEventListener('click', () => {
-    const f = $('funnel');
-    if (lastDomain) $('s-site').value = lastDomain;
-    if (lastCity) {
-      let hid = f.querySelector('input[name="city"]');
-      if (!hid) {
-        hid = document.createElement('input');
-        hid.type = 'hidden';
-        hid.name = 'city';
-        hid.dataset.label = 'City';
-        f.appendChild(hid);
-      }
-      hid.value = lastCity;
-    }
+    fillFunnel();
     $('start').scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'start' });
     const first = ['s-site', 's-biz'].map($).find((el) => !el.value.trim()) || $('s-biz');
     setTimeout(() => first.focus({ preventScroll: true }), reducedMotion ? 0 : 600);

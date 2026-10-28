@@ -159,7 +159,7 @@
 .pitch__list li::marker { font-weight: 800; color: var(--pink-deep); }
 .pitch__problem { margin: 0 0 2px; font-weight: 700; }
 .pitch__fix { margin: 0; color: var(--muted); }
-.pitch__actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.pitch__actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: clamp(18px, 2.5vw, 28px); }
 
 /* live preview of the visitor's site, shown in place of the before/after block */
 .builder__city { display: grid; gap: 10px; }
