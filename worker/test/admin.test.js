@@ -122,3 +122,15 @@ test('preflight allows the authorization header', async () => {
   expect(res.status).toBe(204);
   expect(res.headers.get('access-control-allow-headers')).toContain('authorization');
 });
+
+test("embedded reports are returned without any report-id reads; old leads fall back to one read", async () => {
+  await env.MW.put("report-id:old", JSON.stringify(REPORT));
+  await seed("emb", { createdAt: 3000, report: REPORT, reportId: "gone" });
+  await seed("legacy", { createdAt: 2000, reportId: "old" });
+  await seed("expired", { createdAt: 1000, reportId: "vanished" });
+  const get = vi.spyOn(env.MW, "get");
+  const { leads } = await (await getLeads()).json();
+  const reads = get.mock.calls.map((c) => c[0]).filter((k) => k.startsWith("report-id:"));
+  expect(reads.sort()).toEqual(["report-id:old", "report-id:vanished"]);
+  expect(leads.map((l) => l.report)).toEqual([REPORT, REPORT, null]);
+});

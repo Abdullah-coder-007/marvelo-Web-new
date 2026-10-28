@@ -8,6 +8,7 @@ export async function createLead(env, f) {
     website: f.website, name: f.name, email: f.email, phone: f.phone, business: f.business, extras: f.extras,
     trade: f.trade, issues: f.issues, city: f.city,
     reportId: f.reportId,
+    report: f.report ?? null, // report-id records expire after 90 days, so the lead keeps its own copy
   };
   await env.MW.put(`lead:${lead.id}`, JSON.stringify(lead), { expirationTtl: LEAD_TTL });
   return lead;

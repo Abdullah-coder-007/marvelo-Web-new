@@ -119,7 +119,11 @@ async function handleEnhance(request, env, origin) {
   if (!EMAIL_RE.test(f.email) || !f.phone || !f.website) return err('invalid', 400);
 
   const rid = str(body.reportId, 100);
-  if (rid && (await env.MW.get(`report-id:${rid}`))) f.reportId = rid;
+  const rawReport = rid ? await env.MW.get(`report-id:${rid}`) : null;
+  if (rawReport) {
+    f.reportId = rid;
+    try { f.report = JSON.parse(rawReport); } catch { f.report = null; }
+  }
 
   await createLead(env, f);
   return respond({ ok: true }, 202, origin);

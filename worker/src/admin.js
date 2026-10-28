@@ -35,8 +35,8 @@ async function readLead(env, name) {
     if (!raw) return null;
     const l = JSON.parse(raw);
     if (!l || typeof l !== 'object') return null;
-    let report = null;
-    if (typeof l.reportId === 'string' && l.reportId) {
+    let report = l.report && typeof l.report === "object" ? l.report : null;
+    if (!report && typeof l.reportId === 'string' && l.reportId) {
       try { report = JSON.parse(await env.MW.get(`report-id:${l.reportId}`)) || null; } catch { report = null; }
     }
     return {

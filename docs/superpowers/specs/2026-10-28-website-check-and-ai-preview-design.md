@@ -304,3 +304,50 @@ The owner changed direction during the build. Where this amendment conflicts wit
 
 ### Owner setup changes
 - Replace the Claude key with a DataForSEO account (dataforseo.com, about $10 credit). Set its login and password as `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD`.
+
+---
+
+## Amendment 2 (2026-10-28): private leads page instead of lead emails
+
+Where this amendment conflicts with the sections above, it wins.
+
+### Lead email removed
+- Remove the Resend lead email, the email retries, `LEAD_EMAIL_TO` and `RESEND_API_KEY`.
+- Remove the cron trigger and the `scheduled` handler. Expiry now relies on the KV TTL.
+- Leads are kept for **365 days**: `lead:<id>` is stored with `expirationTtl` 31,536,000.
+- The visitor still sees the thank-you message "Thanks! We'll send your free redesign plan within 24 hours."
+
+### `GET /leads` (admin)
+- Requires `Authorization: Bearer <ADMIN_KEY>`, where `ADMIN_KEY` is a new Worker secret.
+  - The key comparison is constant-time.
+  - A missing or wrong key returns 401 `{ error: 'auth' }`.
+  - Failed attempts are limited to 10 per IP per hour, after which the endpoint returns 429 `{ error: 'limit' }`. Successful requests are not counted.
+- CORS is restricted to `ALLOWED_ORIGINS`, the same as the other routes.
+- The endpoint returns `{ leads: [...] }`, newest first. It pages through the KV list with a cursor, up to 2,000 leads. Each lead contains:
+  - `id`, `createdAt`
+  - `website`, `name`, `email`, `phone`, `business`, `trade`, `city`, `issues`
+  - `report`: the attached report object, or null
+- It never logs lead contents.
+
+### `leads.html` (private page on the site)
+- **Hidden from search.** The page carries `<meta name="robots" content="noindex, nofollow">`. It is not linked from anywhere on the site.
+- **Admin key.**
+  - On the first visit it asks for the admin key and keeps it in `localStorage`, wrapped in try/catch so it still works where storage is blocked.
+  - A "Forget this device" button clears the stored key.
+  - A 401 clears the stored key and asks again.
+- **Lead table.**
+  - Columns, newest first: date, name, email (`mailto:` link), phone (`tel:` link), website, city, business type, warning signs, report score.
+  - A row expands to show the report's verdict, the five category scores and their issues, and the rankings table.
+  - A search box filters rows on the client.
+- **Download CSV.**
+  - Exports every lead with all fields and the score.
+  - Escapes quotes and commas properly.
+  - Neutralises spreadsheet formulas: a cell starting with `=`, `+`, `-`, `@` or a tab is prefixed with `'`.
+  - The file is named `marveloweb-leads-YYYY-MM-DD.csv`.
+- **Rendering.** Every value is shown with `textContent`. The page uses the site's styles and logo.
+- **When the check is off.** The page has `API_BASE` at the top, shared in spirit with `redesign.js`. While it is empty, the page shows "The website check isn't switched on yet."
+
+### Owner setup changes
+- Resend is no longer needed.
+- The secrets are now `PSI_API_KEY`, `TURNSTILE_SECRET`, `DATAFORSEO_LOGIN`, `DATAFORSEO_PASSWORD` and `ADMIN_KEY`. The owner picks a long random admin key, for example from a password manager.
+- Later CRM integration can either use the CSV or read `GET /leads` with the admin key.

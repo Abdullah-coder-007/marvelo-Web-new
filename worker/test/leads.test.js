@@ -55,7 +55,7 @@ test('trade, issues, city and report id reach the stored lead', async () => {
   await env.MW.put('report-id:r1', JSON.stringify({ id: 'r1', score: 55 }));
   await enhance({ ...form, trade: 'Plumbing', issues: 'Slow site; <i>no calls</i>', city: 'Austin, TX', reportId: 'r1' });
   const [id] = await leadIds();
-  expect(await getLead(id)).toMatchObject({ trade: 'Plumbing', issues: 'Slow site; <i>no calls</i>', city: 'Austin, TX', reportId: 'r1' });
+  expect(await getLead(id)).toMatchObject({ trade: 'Plumbing', issues: 'Slow site; <i>no calls</i>', city: 'Austin, TX', reportId: 'r1', report: { id: 'r1', score: 55 } });
 });
 
 test('missing phone -> 400', async () => {
