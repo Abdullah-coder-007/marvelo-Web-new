@@ -205,3 +205,102 @@ Request: `{ website, name, email, phone, business?, reportId?, extras..., turnst
 - sending the preview to the visitor automatically
 - payments
 - multi-page previews
+
+---
+
+## Amendment 1 (2026-10-28): no AI preview, real keyword rankings, downloadable report
+
+The owner changed direction during the build. Where this amendment conflicts with the sections above, the amendment wins.
+
+### Removed
+- There is no AI-built preview. Remove the Claude call, the `preview:` records, the preview key and `GET /p/<id>`. `ANTHROPIC_API_KEY` is no longer used.
+- The lead email still goes to the owner with the visitor's details and the full report, just without a preview link. The cron keeps retrying the email (hourly, up to 24 attempts) and keeps the 90-day clean-up.
+- After Enhance, the visitor copy becomes: "Thanks! We'll send your free redesign plan within 24 hours."
+
+### Visitor experience
+- **Hero form:** two fields, "Your website" and "Your city" (e.g. "Columbus, OH"). Both are required while the check is switched on.
+- **Live preview:** once a check starts, the hero's right column shows a live screenshot of their homepage in a browser frame. It comes from `https://s.wordpress.com/mshots/v1/<encoded url>?w=1200&h=800`. If the screenshot fails, a panel shows the domain instead. The before/after slider moves to just below the report.
+- **Report layout:** five category cards in a neatly aligned grid of equal-height cards. Each card's score badge sits in the same position. The cards appear in this order:
+  - **Design:**
+    - viewport
+    - HTTPS
+    - old copyright year
+    - favicon
+    - dated markup (`<font>`, `<marquee>`, `<center>`, or table-based layout)
+    - PageSpeed's image and readability audits: oversized images, old image formats, small text, cramped tap targets
+  - **SEO:**
+    - title present, 30 to 65 characters
+    - meta description present, 70 to 160 characters
+    - exactly one h1
+    - LocalBusiness-type structured data
+    - indexable
+    - canonical link
+    - image alt text on at least 80 % of images
+    - `/robots.txt` and `/sitemap.xml` reachable
+    - PageSpeed SEO score
+  - **Rankings:**
+    - the five searches below, each with their position ("#14", or "Not in the top 100")
+    - whether they appear in the Google Maps results
+  - **Speed:** as before.
+  - **Calls to action:** as before.
+- **Pitch:** a block after the cards, headed "Here's what's costing you customers". It lists the three most important problems and how MarveloWeb fixes each one, then a "Fix my website" button that opens the form with their website and city filled in.
+- **Download:** a "Download report (PDF)" button under the pitch. It opens the browser's print dialog on a dedicated print layout, where the visitor can choose "Save as PDF".
+  - The print layout is branded:
+    - MarveloWeb logo and wordmark at the top
+    - the checked website, city and date
+    - the overall score and verdict
+    - all five cards, then the pitch
+  - The footer reads "Prepared by MarveloWeb · marveloweb.com · hello@marveloweb.com".
+  - Cards never split across pages.
+  - No site navigation, buttons, forms or screenshots are printed, apart from a small screenshot thumbnail if it has already loaded.
+  - The layout uses A4/Letter-safe margins and black text with the pink accent.
+
+### Rankings
+- **Source:** DataForSEO SERP API, Google organic, live advanced endpoint: `POST https://api.dataforseo.com/v3/serp/google/organic/live/advanced`.
+  - Basic auth comes from the secrets `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD`.
+  - Each call carries one task. The five calls run in parallel.
+  - Each task sets `language_code: "en"`, `device: "mobile"` and `depth: 100`, with a 30 s timeout.
+- **Location:** `location_name` is `"<City>,<State full name>,United States"`, taken from the visitor's city field. US state abbreviations are expanded. If the location can't be parsed, or DataForSEO rejects it, the Rankings card is unavailable with "We couldn't check rankings for that city."
+- **Business type:** taken from the page.
+  - First from the JSON-LD type, e.g. Dentist → dentist, Plumber → plumber.
+  - Otherwise from words in the title or h1:
+    - dental → dentist
+    - plumbing → plumber
+    - roof → roofer
+    - hvac / heating / air conditioning → HVAC company
+    - med spa → med spa
+    - attorney / law → lawyer
+    - real estate → real estate agent
+    - salon → hair salon
+    - clinic → clinic
+  - If nothing matches, the Rankings card is unavailable with "We couldn't tell what your business does."
+- **The five searches**, for business type `t`, city `C` and state abbreviation `S`:
+  - `t near me`
+  - `best t near me`
+  - `t in C S`
+  - `t C`
+  - `emergency t near me` for dentist, plumber, roofer, HVAC company or locksmith; otherwise `affordable t near me`
+- **Match:**
+  - An organic item matches when its domain, without `www.`, equals theirs.
+  - Maps presence means any `local_pack` item with a matching domain.
+- **Score per search:**
+  - positions 1–3: 100
+  - 4–10: 70
+  - 11–20: 40
+  - 21–100: 15
+  - not found: 0
+  
+  The category score is the average of the five. Appearing in the Maps pack on any search adds 10, capped at 100.
+- **Claims:** the pitch says "get found on Google" and never promises positions.
+
+### Cost protection
+- Rankings cost about $0.002 per search, which is about 1 cent per check.
+- On top of the 5-checks-per-hour limit per visitor, there is a site-wide cap of 200 checks per UTC day, using KV key `cap:check:<YYYY-MM-DD>`. Over the cap, `/check` returns 429 `{ error: 'busy' }` and the page shows "Please try again in a little while."
+- Cached reports (24 h) don't count toward either limit.
+
+### Pitch (built by the server)
+- `report.pitch = { headline: "Here's what's costing you customers", points: [{ problem, fix }] }`.
+- It has at most 3 points: the first issue from each of the three lowest-scoring available categories.
+
+### Owner setup changes
+- Replace the Claude key with a DataForSEO account (dataforseo.com, about $10 credit). Set its login and password as `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD`.

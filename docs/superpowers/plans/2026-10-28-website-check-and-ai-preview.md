@@ -411,3 +411,96 @@ test('third enhance in a day -> 429', async () => {});
   - Submit Enhance with the owner's test email. The email arrives with the report.
   - The preview link opens, and a wrong `k` gives 404.
 - [ ] **Step 5:** Update `README.md` with the Worker, its secrets and how to deploy. Commit and push.
+
+---
+
+## Amendment 1 tasks (see spec "Amendment 1"; these replace the unbuilt parts of Tasks 5–8)
+
+### Task 9: Server — remove AI preview, add rankings, deeper checks, cap, pitch
+
+**Files:**
+- Delete: `worker/src/preview.js`, `worker/test/preview.test.js`
+- Create: `worker/src/rankings.js`, `worker/test/rankings.test.js`
+- Modify:
+  - `worker/src/leads.js`, `mail.js`, `index.js`, `page-scan.js`, `report.js`, `limits.js`, and their tests
+  - `worker/vitest.config.js` bindings: drop `ANTHROPIC_API_KEY`, add `DATAFORSEO_LOGIN` and `DATAFORSEO_PASSWORD`
+
+**Interfaces:**
+- **`rankings.js` exports:**
+  - `detectTrade(facts) -> string|null`
+  - `parseCity(input) -> { city, state, stateName }|null` (US only)
+  - `buildKeywords(trade, loc) -> string[5]`
+  - `runRankings(domain, trade, loc, env, fetchImpl?) -> Promise<{ results: [{ keyword, position: number|null, inMaps: boolean }] }|null>`. It never throws.
+- **`buildReport(url, facts, psi, now?, rank?)`:**
+  - `rank = { status: 'ok'|'no-trade'|'no-city'|'failed', results? }`
+  - It returns five categories in this order: `design`, `seo`, `rankings`, `speed`, `cta`.
+  - The old `google` key becomes `seo`.
+  - It also returns `pitch`.
+- **`PageFacts` gains:**
+  - `titleLength`, `descriptionLength`
+  - `canonical`, `favicon`, `datedMarkup` (booleans)
+  - `images`, `imagesWithAlt`
+  - `robotsTxt`, `sitemap` (`bool|null`)
+  
+  `fetchPage` fetches `/robots.txt` and `/sitemap.xml` behind the same guard, with a 5 s timeout and a 64 KB cap. A 200 response means true.
+- **`/check`:**
+  - The body is `{ url, city, turnstileToken }`. A missing city returns 400 `'invalid'`.
+  - The cache key is `report:<href>|<lowercased city>`.
+  - The daily cap uses `capDaily(env, 'check', 200) -> Promise<boolean>`, which returns 429 `'busy'` when the cap is hit. A cache hit is not counted.
+- **Leads:**
+  - `/enhance` and `processLead` never call Claude.
+  - `sendLeadEmail(env, { lead, report }, fetchImpl?)` sends no link, and the "Preview failed:" path is removed.
+  - The `GET /p/` route is removed.
+
+**Required tests (spec values verbatim):**
+- **City parsing:**
+  - `parseCity('Columbus, OH')` deep-equals `{ city:'Columbus', state:'OH', stateName:'Ohio' }`.
+  - `parseCity('Newark, New Jersey').state` is `'NJ'`.
+  - `parseCity('Paris')` is null.
+- **Trade detection:**
+  - JSON-LD `Dentist` gives `'dentist'`.
+  - A title of "Rivera Plumbing | Austin" gives `'plumber'`.
+  - No signal gives null.
+- **Keywords:**
+  - `buildKeywords('dentist', {city:'Columbus', state:'OH'})` equals `['dentist near me','best dentist near me','dentist in Columbus OH','dentist Columbus','emergency dentist near me']`.
+  - For `'hair salon'`, the fifth keyword is `'affordable hair salon near me'`.
+- **`runRankings`:**
+  - It posts to the live advanced endpoint with `location_name: 'Columbus,Ohio,United States'` and basic auth.
+  - An organic item `www.rivera.com` with `rank_group: 14` gives position 14.
+  - A matching `local_pack` item gives `inMaps: true`.
+  - A non-OK status or a thrown fetch gives null.
+- **Rankings score:**
+  - Positions [2, 7, 15, 40, null] give 45.
+  - With Maps presence, the score is 55.
+- **SEO and design checks:**
+  - The title check fails at 25 characters and passes at 40.
+  - The alt check fails at 3/5 and passes at 4/5.
+  - `datedMarkup` is true for `<font>` and for `<center>`.
+- **Pitch:**
+  - At most 3 points, taken from the lowest-scoring available categories.
+  - The pitch copy never matches /rank|#1|top of google/i.
+- **Daily cap:** the 201st check in a day returns 429 `'busy'`, and a cache hit does not count.
+- **Lead email:** it contains the report and has no `/p/` link.
+- **Regressions:** every existing behaviour that the amendment doesn't remove still passes.
+
+### Task 10: Page — city field, live preview, aligned five-card report, pitch, branded PDF download
+
+**Files:** `redesign.html`, `redesign.css`, `redesign.js`
+
+**Requirements:**
+- **City field:** the hero gets `#u-city` ("Your city", placeholder "e.g. Columbus, OH"). It is required only while `API_BASE` is set, and it is sent as `city`.
+- **Check starts:**
+  - The hero's right column shows a browser-frame screenshot from the spec's mshots URL, with the domain in the address bar and a domain panel shown if the image fails.
+  - The before/after block moves to just below `#report`.
+- **Report layout:** five equal-height cards in an aligned grid, with the score badge in the same spot on each card. On desktop the grid is 3 + 2 or 2 columns; on phones it is 1 column. The Rankings card shows a keyword → "#N" / "Not in the top 100" table plus a "Shows on Google Maps: Yes/No" line.
+- **Pitch block:** built from `report.pitch`. Its "Fix my website" button fills `#s-site` and a hidden `city` input in the funnel, then scrolls to `#start`.
+- **Download:** a "Download report (PDF)" button calls `window.print()`. A `@media print` stylesheet produces the branded layout from the spec, with cards using `break-inside: avoid`. A print-only header and footer carry the MarveloWeb logo, the website, city and date, and "Prepared by MarveloWeb · marveloweb.com · hello@marveloweb.com".
+- **Error copy:** a 429 `'busy'` response uses the same copy as `'limit'`.
+- **Done copy:** `[data-done-sent]` reads "Thanks! We'll send your free redesign plan within 24 hours."
+- **Unchanged rules:**
+  - All server strings are set via `textContent`.
+  - At 375 px there is no horizontal scroll.
+  - With empty constants, the page keeps today's behaviour.
+  - Bump the `?v=` values.
+
+### Task 11: Final whole-branch review, then Task 8 (owner setup and deploy) with DataForSEO in place of Claude
