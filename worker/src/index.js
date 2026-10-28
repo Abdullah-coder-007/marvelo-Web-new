@@ -4,7 +4,8 @@ import { runPsi } from './psi.js';
 import { buildReport } from './report.js';
 import { verifyTurnstile, rateLimit, capDaily } from './limits.js';
 import { parseCity, detectTrade, runRankings } from './rankings.js';
-import { createLead, runCron } from './leads.js';
+import { createLead } from './leads.js';
+import { handleLeads } from './admin.js';
 
 const REPORT_TTL = 86400;
 const REPORT_ID_TTL = 90 * 86400;
@@ -125,10 +126,6 @@ async function handleEnhance(request, env, origin) {
 }
 
 export default {
-  async scheduled(event, env, ctx) {
-    ctx.waitUntil(runCron(env, new Date(event.scheduledTime)));
-  },
-
   async fetch(request, env, ctx) {
     const origin = request.headers.get('origin');
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -138,7 +135,7 @@ export default {
     if (request.method === 'OPTIONS') {
       return respond(null, 204, o, {
         'access-control-allow-methods': 'POST, GET, OPTIONS',
-        'access-control-allow-headers': 'content-type',
+        'access-control-allow-headers': 'content-type, authorization',
         'access-control-max-age': '86400',
       });
     }
@@ -147,6 +144,7 @@ export default {
     try {
       if (pathname === '/check' && request.method === 'POST') return await handleCheck(request, env, o);
       if (pathname === '/enhance' && request.method === 'POST') return await handleEnhance(request, env, o);
+      if (pathname === '/leads' && request.method === 'GET') return await handleLeads(request, env, o, respond);
       return respond({ error: 'not-found' }, 404, o);
     } catch (e) {
       console.error(e);

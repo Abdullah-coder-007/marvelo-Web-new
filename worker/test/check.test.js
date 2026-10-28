@@ -59,7 +59,7 @@ test('OPTIONS from an allowed origin returns CORS headers', async () => {
   expect(res.status).toBe(204);
   expect(res.headers.get('access-control-allow-origin')).toBe(ORIGIN);
   expect(res.headers.get('access-control-allow-methods')).toBe('POST, GET, OPTIONS');
-  expect(res.headers.get('access-control-allow-headers')).toBe('content-type');
+  expect(res.headers.get('access-control-allow-headers')).toBe('content-type, authorization');
   expect(res.headers.get('vary')).toBe('Origin');
 });
 

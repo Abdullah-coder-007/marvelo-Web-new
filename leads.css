@@ -1,0 +1,53 @@
+/* Private leads page. Builds on the tokens in styles.css. */
+.sr { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.leads__bar { border-bottom: 1.5px solid var(--ink); background: var(--paper); }
+.leads__bar-inner { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 64px; }
+.leads__tag { font-family: var(--f-mono); font-size: 13px; text-transform: uppercase; letter-spacing: .08em; color: var(--muted); }
+.leads__main { padding-top: 32px; padding-bottom: 64px; min-width: 0; }
+.leads h1 { font-size: clamp(1.8rem, 5vw, 2.6rem); line-height: 1.05; letter-spacing: -.035em; margin-bottom: 8px; }
+.leads__count { font-family: var(--f-mono); font-size: .5em; color: var(--muted); letter-spacing: 0; }
+.leads__off { font-size: 1.15rem; padding: 24px; border: 1.5px solid var(--ink); border-radius: 14px; background: var(--paper-2); }
+
+.leads__login { max-width: 520px; display: grid; gap: 10px; }
+.leads__login p { color: var(--muted); }
+.leads__login label { font-weight: 500; font-size: 14.5px; }
+.leads__row { display: flex; flex-wrap: wrap; gap: 10px; }
+.leads input { font: inherit; color: var(--ink); background: #fff; border: 1.5px solid var(--ink); border-radius: 12px; min-height: 48px; padding: 0 14px; min-width: 0; }
+.leads input:focus-visible { outline: 3px solid var(--pink); outline-offset: 2px; }
+.leads__row input { flex: 1 1 200px; }
+.leads__error { color: #C62828; font-size: 15px; min-height: 1.5em; }
+
+.leads__head { display: grid; gap: 14px; margin-bottom: 14px; }
+.leads__tools { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.leads__tools input { flex: 1 1 220px; }
+.leads__tools .btn { flex: 0 0 auto; }
+.leads__status { color: var(--muted); min-height: 1.5em; margin-bottom: 6px; }
+
+.leads__scroller { width: 100%; max-width: 100%; overflow-x: auto; border: 1.5px solid var(--ink); border-radius: 14px; background: #fff; -webkit-overflow-scrolling: touch; }
+.leads__table { border-collapse: collapse; width: 100%; min-width: 980px; font-size: 14.5px; line-height: 1.4; }
+.leads__table th { text-align: left; font-family: var(--f-mono); font-size: 12px; text-transform: uppercase; letter-spacing: .06em; background: var(--ink); color: var(--paper); padding: 10px 12px; white-space: nowrap; position: sticky; top: 0; }
+.leads__table td { padding: 10px 12px; border-top: 1px solid var(--line); vertical-align: top; overflow-wrap: anywhere; }
+.leads__table a { color: var(--pink-deep); text-decoration: underline; text-underline-offset: 2px; }
+.leads__table .nowrap { white-space: nowrap; }
+.leads__wide { min-width: 220px; }
+.leads__toggle { width: 32px; height: 32px; border: 1.5px solid var(--ink); border-radius: 8px; background: var(--paper); color: var(--ink); font: 700 16px/1 var(--f-mono); cursor: pointer; }
+.leads__toggle:hover { background: var(--pink); }
+.leads__expand td { background: var(--paper); padding: 16px; }
+.leads__detail { display: grid; gap: 10px; max-width: 1000px; }
+.leads__muted { color: var(--muted); }
+.leads__verdict { font-weight: 700; font-size: 1.05rem; }
+.leads__cats { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; }
+.leads__cat { background: #fff; border: 1.5px solid var(--ink); border-radius: 12px; padding: 12px; min-width: 0; }
+.leads__cat h3, .leads__pitch { font-size: 1rem; margin: 0 0 6px; }
+.leads__cat ul, .leads__detail > ul { margin: 0; padding-left: 1.1em; }
+.leads__rank { border-collapse: collapse; width: 100%; margin-top: 8px; font-size: 13px; }
+.leads__rank th { position: static; background: var(--paper-2); color: var(--ink); padding: 4px 6px; }
+.leads__rank td { padding: 4px 6px; border-top: 1px solid var(--line); }
+
+@media (min-width: 720px) {
+  .leads__head { grid-template-columns: 1fr auto; align-items: end; }
+}
+
+.leads [hidden] { display: none !important; }
+.leads__table td { overflow-wrap: break-word; }
+.leads__table td:nth-child(3), .leads__table td:nth-child(4), .leads__table td:nth-child(6) { min-width: 130px; }

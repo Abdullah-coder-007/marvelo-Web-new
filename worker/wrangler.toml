@@ -6,10 +6,7 @@ compatibility_date = "2026-10-01"
 binding = "MW"
 id = "REPLACE_WITH_KV_ID"
 
-[triggers]
-crons = ["*/10 * * * *"]
-
 # Secrets (set each from this folder with `npx wrangler secret put NAME`; they survive deploys):
-#   PSI_API_KEY, RESEND_API_KEY, TURNSTILE_SECRET, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD, LEAD_EMAIL_TO
+#   PSI_API_KEY, TURNSTILE_SECRET, DATAFORSEO_LOGIN, DATAFORSEO_PASSWORD, ADMIN_KEY
 [vars]
 ALLOWED_ORIGINS = "https://abdullah-coder-007.github.io,https://marveloweb.com,https://www.marveloweb.com"
