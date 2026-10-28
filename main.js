@@ -28,7 +28,11 @@
 
   // ---------- Arrival sequence: curtain (first visit only) → page entrance ----------
   const curtain = document.querySelector('.curtain');
-  const startHero = () => requestAnimationFrame(() => root.classList.add('go'));
+  // 'mw:arrived' tells page scripts the intro is over (the home page opens its path chooser then)
+  const startHero = () => requestAnimationFrame(() => {
+    root.classList.add('go');
+    document.dispatchEvent(new Event('mw:arrived'));
+  });
   if (curtain && root.classList.contains('intro')) {
     let left = false;
     const leave = () => {
