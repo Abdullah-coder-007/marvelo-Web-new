@@ -3,7 +3,7 @@ import { fetchPage } from './page-scan.js';
 import { runPsi } from './psi.js';
 import { buildReport } from './report.js';
 import { verifyTurnstile, rateLimit } from './limits.js';
-import { createLead, processLead, runCron, safeEqual } from './leads.js';
+import { createLead, runCron, safeEqual } from './leads.js';
 
 const REPORT_TTL = 86400;
 const REPORT_ID_TTL = 90 * 86400;
@@ -68,7 +68,7 @@ const ENHANCE_MAX = 2;
 const ENHANCE_WINDOW = 86400;
 const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
 
-async function handleEnhance(request, env, ctx, origin) {
+async function handleEnhance(request, env, origin) {
   const err = (error, status) => respond({ error }, status, origin);
   let body;
   try {
@@ -92,8 +92,7 @@ async function handleEnhance(request, env, ctx, origin) {
   const rid = str(body.reportId, 100);
   if (rid && (await env.MW.get(`report-id:${rid}`))) f.reportId = rid;
 
-  const lead = await createLead(env, f);
-  ctx.waitUntil(processLead(env, lead.id));
+  await createLead(env, f);
   return respond({ ok: true }, 202, origin);
 }
 
@@ -138,7 +137,7 @@ export default {
     const { pathname } = url;
     try {
       if (pathname === '/check' && request.method === 'POST') return await handleCheck(request, env, o);
-      if (pathname === '/enhance' && request.method === 'POST') return await handleEnhance(request, env, ctx, o);
+      if (pathname === '/enhance' && request.method === 'POST') return await handleEnhance(request, env, o);
       if (pathname.startsWith('/p/') && request.method === 'GET') return await handlePreview(url, env, o);
       return respond({ error: 'not-found' }, 404, o);
     } catch (e) {

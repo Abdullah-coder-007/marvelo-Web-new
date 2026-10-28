@@ -25,9 +25,8 @@ function mockNetwork() {
   });
 }
 const emails = () => calls.filter((c) => c.url.startsWith('https://api.resend.com/')).map((c) => JSON.parse(c.init.body));
-const flush = async (pred) => {
-  for (let i = 0; i < 100 && !(await pred()); i++) await new Promise((r) => setTimeout(r, 20));
-};
+const cron = (now = new Date()) => runCron(env, now);
+const anthropicCalls = () => calls.filter((c) => c.url.startsWith('https://api.anthropic.com/')).length;
 
 const form = { website: 'rivera-plumbing.com', name: 'Ana <b>Rivera</b>', email: 'ana@example.com', phone: '555-0100', business: 'Rivera Plumbing', extras: 'more', turnstileToken: 't' };
 function enhance(body, { ip = '2.2.2.2', origin = ORIGIN, raw } = {}) {
@@ -45,23 +44,30 @@ beforeEach(async () => {
   const { keys } = await env.MW.list();
   await Promise.all(keys.map((k) => env.MW.delete(k.name)));
 });
-// let in-flight background jobs finish while the mocks are still in place
-afterEach(async () => {
-  await new Promise((r) => setTimeout(r, 150));
-  vi.restoreAllMocks();
-});
+afterEach(() => vi.restoreAllMocks());
 
-test('enhance replies 202 before the preview is built', async () => {
-  claude = () => new Promise(() => {}); // hangs
+test('enhance replies 202 and does no preview work itself', async () => {
   const res = await enhance(form);
   expect(res.status).toBe(202);
   expect(await res.json()).toEqual({ ok: true });
-  await flush(async () => calls.some((c) => c.url.startsWith('https://api.anthropic.com/')));
   const [id] = await leadIds();
   const lead = await getLead(id);
   expect(lead.emailed).toBe(false);
+  expect(lead.attempts).toBe(0);
   expect(lead.previewKey).toMatch(/^[0-9A-Za-z]{32}$/);
   expect(lead.email).toBe('ana@example.com');
+  expect(anthropicCalls()).toBe(0);
+  expect(await env.MW.get(`preview:${id}`)).toBeNull();
+});
+
+test('a fresh lead gets its preview and email on the first cron run', async () => {
+  await enhance(form);
+  const [id] = await leadIds();
+  await cron();
+  expect(anthropicCalls()).toBe(1);
+  expect((await getLead(id)).emailed).toBe(true);
+  expect((await getLead(id)).lastAttemptAt).toBeTruthy();
+  expect(emails().length).toBe(1);
 });
 
 test('enhance builds preview, emails owner with link, escapes HTML', async () => {
@@ -69,7 +75,7 @@ test('enhance builds preview, emails owner with link, escapes HTML', async () =>
   const res = await enhance({ ...form, reportId: 'r1' });
   expect(res.status).toBe(202);
   const [id] = await leadIds();
-  await flush(async () => (await getLead(id)).emailed);
+  await cron();
   const lead = await getLead(id);
   expect(lead.emailed).toBe(true);
   expect(await env.MW.get(`preview:${id}`)).toBe('<html><body>New site</body></html>');
@@ -97,7 +103,7 @@ test('enhance builds preview, emails owner with link, escapes HTML', async () =>
 test('without a report the email says so', async () => {
   await enhance(form);
   const [id] = await leadIds();
-  await flush(async () => (await getLead(id)).emailed);
+  await cron();
   expect(emails()[0].text).toContain('No website check was run.');
 });
 
@@ -115,7 +121,7 @@ test('Claude failure still emails with "Preview failed:" subject', async () => {
   claude = () => new Response('boom', { status: 500 });
   await enhance(form);
   const [id] = await leadIds();
-  await flush(async () => (await getLead(id)).emailed);
+  await cron();
   const [mail] = emails();
   expect(mail.subject.startsWith('Preview failed:')).toBe(true);
   expect(mail.text).not.toContain('/p/');
@@ -144,7 +150,7 @@ test('email failure is retried by cron, max 24', async () => {
   resendOk = false;
   await enhance(form);
   const [id] = await leadIds();
-  await flush(async () => (await getLead(id)).attempts >= 1);
+  await cron();
   expect((await getLead(id)).attempts).toBe(1);
   expect((await getLead(id)).emailed).toBe(false);
 
@@ -152,11 +158,42 @@ test('email failure is retried by cron, max 24', async () => {
   await seedLead('t23', { attempts: 23 });
   await seedLead('t24', { attempts: 24 });
   const before = emails().length;
-  await runCron(env, new Date());
+  await cron(new Date(Date.now() + 2 * 3600 * 1000)); // an hour+ later, so the failed one is due again
   expect(emails().length - before).toBe(2); // the failed one above and t23, not t24
+  expect((await getLead(id)).emailed).toBe(true);
   expect((await getLead('t23')).emailed).toBe(true);
   expect((await getLead('t24')).emailed).toBe(false);
   expect((await getLead('t24')).attempts).toBe(24);
+  expect(anthropicCalls()).toBe(1); // Claude not called again on the email retry
+});
+
+test('cron skips a lead attempted 30 min ago and retries one attempted 61 min ago', async () => {
+  const now = new Date();
+  await seedLead('recent', { attempts: 1, lastAttemptAt: new Date(now.getTime() - 30 * 60000).toISOString() });
+  await seedLead('stale', { attempts: 1, lastAttemptAt: new Date(now.getTime() - 61 * 60000).toISOString() });
+  await cron(now);
+  expect((await getLead('recent')).emailed).toBe(false);
+  expect((await getLead('recent')).attempts).toBe(1);
+  expect((await getLead('stale')).emailed).toBe(true);
+  expect(emails().length).toBe(1);
+});
+
+test('cron processes at most 5 due leads per run, oldest first', async () => {
+  const now = Date.now();
+  for (let i = 0; i < 7; i++) await seedLead(`l${i}`, { createdAt: now - (100 - i) * 1000 });
+  await cron(new Date(now));
+  const done = [];
+  for (let i = 0; i < 7; i++) done.push((await getLead(`l${i}`)).emailed);
+  expect(done).toEqual([true, true, true, true, true, false, false]);
+  expect(emails().length).toBe(5);
+});
+
+test('a corrupt lead record does not stop the others', async () => {
+  await env.MW.put('lead:bad', '{not json');
+  await seedLead('good', {});
+  await cron();
+  expect((await getLead('good')).emailed).toBe(true);
+  expect(await env.MW.get('lead:bad')).toBe('{not json');
 });
 
 test('cron deletes leads older than 90 days with their previews', async () => {
