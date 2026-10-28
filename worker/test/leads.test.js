@@ -35,8 +35,8 @@ const REPORT = {
   id: 'r1', url: 'https://rivera-plumbing.com/', city: 'Austin, TX', score: 55, verdict: 'Your website is holding you back.',
   categories: [
     { key: 'speed', title: 'Speed on phones', score: 40, issues: [{ problem: 'Slow page', fix: 'f' }] },
-    { key: 'rankings', title: 'Found on Google', score: 15, status: 'ok', issues: [{ problem: "You're not in the top 20 for 'plumber near me'.", fix: 'x' }],
-      results: [{ keyword: 'plumber near me', position: 14, inMaps: true }, { keyword: 'plumber Austin', position: null, inMaps: false }] },
+    { key: 'rankings', title: 'Found on Google', score: 15, status: 'ok', depth: 10, issues: [{ problem: "You're not on Google's first page for 'plumber Austin', where most people click.", fix: 'x' }],
+      results: [{ keyword: 'plumber near me', position: 4, inMaps: true }, { keyword: 'plumber Austin', position: null, inMaps: false }] },
   ],
   pitch: { headline: "Here's what's costing you customers", points: [{ problem: 'Slow page', fix: 'We rebuild it.' }] },
 };
@@ -88,13 +88,13 @@ test('lead email contains the report, has no preview link, escapes HTML', async 
     expect(body).toContain('55');
     expect(body).toContain('Slow page');
     expect(body).toContain('Found on Google');
-    expect(body).toContain('#14');
-    expect(body).toContain('Not in the top 100');
+    expect(body).toContain('#4');
+    expect(body).toContain('Not in the top 10');
     expect(body).toContain('Austin, TX');
     expect(body).not.toContain('/p/');
     expect(body).not.toMatch(/preview/i);
   }
-  expect(mail.text).toContain("plumber near me: #14 (in Google Maps)");
+  expect(mail.text).toContain("plumber near me: #4 (in Google Maps)");
   expect(mail.html).toContain('&lt;b&gt;Rivera&lt;/b&gt;');
   expect(mail.html).not.toContain('<b>Rivera</b>');
   const auth = calls.find((c) => c.url.startsWith('https://api.resend.com/')).init.headers.authorization;

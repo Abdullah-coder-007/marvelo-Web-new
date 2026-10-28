@@ -1,5 +1,8 @@
 const ENDPOINT = 'https://api.dataforseo.com/v3/serp/google/organic/live/advanced';
 const TIMEOUT_MS = 30_000;
+// DataForSEO may bill per page of 10 results, so one page per search keeps a check near 1 cent.
+export const SEARCH_DEPTH = 10;
+export const SEARCHES_PER_CHECK = 5;
 
 const STATES = {
   AL: 'Alabama', AK: 'Alaska', AZ: 'Arizona', AR: 'Arkansas', CA: 'California', CO: 'Colorado', CT: 'Connecticut',
@@ -82,40 +85,53 @@ export function buildKeywords(trade, loc) {
     `${trade} in ${loc.city} ${loc.state}`,
     `${trade} ${loc.city}`,
     `${EMERGENCY.has(trade) ? 'emergency' : 'affordable'} ${trade} near me`,
-  ];
+  ].slice(0, SEARCHES_PER_CHECK);
 }
 
+const titleCase = (s) => s.toLowerCase().replace(/\b[a-z]/g, (c) => c.toUpperCase());
 const bare = (d) => String(d || '').toLowerCase().replace(/\.$/, '').replace(/^www\./, '');
+class DfsError extends Error {}
 
 async function oneSearch(keyword, locationName, auth, fetchImpl) {
   const res = await fetchImpl(ENDPOINT, {
     method: 'POST',
     headers: { authorization: auth, 'content-type': 'application/json' },
-    body: JSON.stringify([{ keyword, location_name: locationName, language_code: 'en', device: 'mobile', depth: 100 }]),
+    body: JSON.stringify([{ keyword, location_name: locationName, language_code: 'en', device: 'mobile', depth: SEARCH_DEPTH }]),
     signal: AbortSignal.timeout(TIMEOUT_MS),
   });
-  if (res.status !== 200) throw new Error(`dataforseo-${res.status}`);
+  // Logs status codes only, never the auth header or credentials.
+  if (res.status !== 200) {
+    console.error('dataforseo', res.status, null);
+    throw new DfsError();
+  }
   const task = (await res.json())?.tasks?.[0];
-  if (task?.status_code !== 20000) throw new Error(`dataforseo-task-${task?.status_code}`);
+  if (task?.status_code !== 20000) {
+    console.error('dataforseo', res.status, task?.status_code ?? null);
+    throw new DfsError();
+  }
   return task.result?.[0]?.items || [];
 }
 
-// One task per call, five calls in parallel. Any failure fails the whole check (returns null). Never throws.
+// One task per call, all calls in parallel. Any failure fails the whole check (returns null). Never throws.
+// A position beyond SEARCH_DEPTH, or no match, is null.
 export async function runRankings(domain, trade, loc, env, fetchImpl = fetch) {
   try {
     const mine = bare(domain);
     const auth = `Basic ${btoa(`${env.DATAFORSEO_LOGIN ?? ''}:${env.DATAFORSEO_PASSWORD ?? ''}`)}`;
-    const locationName = `${loc.city},${loc.stateName},United States`;
+    const locationName = `${titleCase(loc.city)},${loc.stateName},United States`;
     const keywords = buildKeywords(trade, loc);
     const all = await Promise.all(keywords.map((k) => oneSearch(k, locationName, auth, fetchImpl)));
     const results = keywords.map((keyword, i) => {
       const items = all[i];
       const hit = items.find((it) => it?.type === 'organic' && bare(it.domain) === mine);
       const inMaps = items.some((it) => it?.type === 'local_pack' && it.domain && bare(it.domain) === mine);
-      return { keyword, position: hit && Number.isFinite(hit.rank_group) ? hit.rank_group : null, inMaps };
+      const p = hit && Number.isFinite(hit.rank_group) ? hit.rank_group : null;
+      return { keyword, position: p !== null && p >= 1 && p <= SEARCH_DEPTH ? p : null, inMaps };
     });
     return { results };
-  } catch {
+  } catch (e) {
+    // Thrown fetches (network, timeout) have no status codes; HTTP and task failures were logged above.
+    if (!(e instanceof DfsError)) console.error('dataforseo', null, null);
     return null;
   }
 }

@@ -53,7 +53,9 @@ async function handleCheck(request, env, origin) {
   if (!city || city.length > 100) return err('invalid', 400);
 
   // Cache hits are free, so they come before both limits.
-  const cacheKey = `report:${url.href}|${city.toLowerCase()}`;
+  // "Columbus, OH" and "columbus, ohio" share an entry; unparsed cities fall back to the lowercased text.
+  const loc = parseCity(city);
+  const cacheKey = `report:${url.href}|${loc ? `${loc.city.toLowerCase()},${loc.state}` : city.toLowerCase()}`;
   const cached = await env.MW.get(cacheKey);
   if (cached) return respond(cached, 200, origin);
 

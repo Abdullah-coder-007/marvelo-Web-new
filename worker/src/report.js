@@ -1,3 +1,5 @@
+import { SEARCH_DEPTH } from './rankings.js';
+
 const MAX_ISSUES = 4;
 const LOCAL_TYPE = /LocalBusiness|Plumber|Electrician|Dentist|Restaurant|Store|Contractor|Salon|Attorney|Physician|AutoRepair|HomeAndConstructionBusiness/i;
 const PITCH_HEADLINE = "Here's what's costing you customers";
@@ -123,12 +125,12 @@ function ctaCategory(facts) {
   return { ...base, score: own, status: 'ok', issues: issues.slice(0, MAX_ISSUES) };
 }
 
-// Points per search: positions 1-3: 100, 4-10: 70, 11-20: 40, 21-100: 15, not found: 0.
-const searchPoints = (p) => (p == null ? 0 : p <= 3 ? 100 : p <= 10 ? 70 : p <= 20 ? 40 : p <= 100 ? 15 : 0);
+// Points per search: positions 1-3: 100, 4-10: 70, beyond SEARCH_DEPTH or not found (null): 0.
+const searchPoints = (p) => (p == null || p > SEARCH_DEPTH ? 0 : p <= 3 ? 100 : 70);
 const FOUND_FIX = 'We build pages for the searches your customers use, so you get found on Google.';
 
 function rankingsCategory(rank) {
-  const base = { key: 'rankings', title: 'Found on Google' };
+  const base = { key: 'rankings', title: 'Found on Google', depth: SEARCH_DEPTH };
   const results = rank?.status === 'ok' && Array.isArray(rank.results) ? rank.results : [];
   if (!results.length) {
     const reason = rank?.status === 'no-city' || rank?.status === 'no-trade' ? rank.status : 'failed';
@@ -137,11 +139,8 @@ function rankingsCategory(rank) {
   }
   const inMaps = results.some((r) => r.inMaps);
   const score = Math.min(100, Math.round(avg(results.map((r) => searchPoints(r.position)))) + (inMaps ? 10 : 0));
-  const missing = results.filter((r) => r.position == null || r.position > 20)
-    .map((r) => ({ problem: `You're not in the top 20 for '${r.keyword}'.`, fix: FOUND_FIX }));
-  const pageTwo = results.filter((r) => r.position > 10 && r.position <= 20)
-    .map((r) => ({ problem: `You're not on the first page for '${r.keyword}', where most people click.`, fix: FOUND_FIX }));
-  const words = [...missing, ...pageTwo];
+  const words = results.filter((r) => r.position == null || r.position > SEARCH_DEPTH)
+    .map((r) => ({ problem: `You're not on Google's first page for '${r.keyword}', where most people click.`, fix: FOUND_FIX }));
   const issues = inMaps
     ? words.slice(0, MAX_ISSUES)
     : [...words.slice(0, MAX_ISSUES - 1), { problem: "You don't show up in the Google Maps results for these searches.", fix: 'We set up your local business details so you get found on Google Maps.' }];

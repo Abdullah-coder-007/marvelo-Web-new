@@ -11,7 +11,7 @@ function reportLines(report) {
   for (const c of report.categories || []) {
     lines.push(`- ${c.title}: ${c.score ?? 'n/a'}`);
     for (const r of c.results || []) {
-      lines.push(`    ${r.keyword}: ${r.position ? `#${r.position}` : 'Not in the top 100'}${r.inMaps ? ' (in Google Maps)' : ''}`);
+      lines.push(`    ${r.keyword}: ${r.position ? `#${r.position}` : `Not in the top ${c.depth ?? 10}`}${r.inMaps ? ' (in Google Maps)' : ''}`);
     }
     for (const i of c.issues || []) lines.push(`    * ${i.problem}`);
   }

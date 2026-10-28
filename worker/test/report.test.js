@@ -11,8 +11,8 @@ const facts = {
 const RANK = { status: 'ok', results: [
   { keyword: 'plumber near me', position: 2, inMaps: false },
   { keyword: 'best plumber near me', position: 7, inMaps: false },
-  { keyword: 'plumber in Austin TX', position: 15, inMaps: false },
-  { keyword: 'plumber Austin', position: 40, inMaps: false },
+  { keyword: 'plumber in Austin TX', position: null, inMaps: false },
+  { keyword: 'plumber Austin', position: null, inMaps: false },
   { keyword: 'emergency plumber near me', position: null, inMaps: false },
 ] };
 const NOW = new Date('2026-10-28');
@@ -26,8 +26,8 @@ const designIssues = (f, p = null) => problems(cat(buildReport('https://r.exampl
 test('scores categories and total, in order', () => {
   const r = buildReport('https://rivera.example/', facts, psi, NOW, RANK);
   expect(r.categories.map((c) => c.key)).toEqual(['design', 'seo', 'rankings', 'speed', 'cta']);
-  expect(scores(r)).toEqual({ design: 90, seo: 75, rankings: 45, speed: 42, cta: 66 });
-  expect(r.score).toBe(64);
+  expect(scores(r)).toEqual({ design: 90, seo: 75, rankings: 34, speed: 42, cta: 66 });
+  expect(r.score).toBe(Math.round((90 + 75 + 34 + 42 + 66) / 5));
   expect(r.verdict).toBe('Your website is holding you back.');
   expect(r.id).toMatch(/^[0-9a-f-]{36}$/);
   expect(r.url).toBe('https://rivera.example/');
@@ -114,12 +114,12 @@ describe('deeper SEO and design checks', () => {
 describe('rankings category', () => {
   test('score is the average of the per-search points', () => {
     const c = cat(buildReport('https://r.example/', facts, psi, NOW, RANK), 'rankings');
-    expect(c).toMatchObject({ score: 45, status: 'ok', title: 'Found on Google' });
+    expect(c).toMatchObject({ score: 34, status: 'ok', title: 'Found on Google', depth: 10 });
     expect(c.results).toEqual(RANK.results);
   });
   test('Maps presence adds 10, capped at 100', () => {
     const maps = { status: 'ok', results: RANK.results.map((x, i) => ({ ...x, inMaps: i === 3 })) };
-    expect(cat(buildReport('https://r.example/', facts, psi, NOW, maps), 'rankings').score).toBe(55);
+    expect(cat(buildReport('https://r.example/', facts, psi, NOW, maps), 'rankings').score).toBe(44);
     const top = { status: 'ok', results: RANK.results.map((x) => ({ ...x, position: 1, inMaps: true })) };
     const c = cat(buildReport('https://r.example/', facts, psi, NOW, top), 'rankings');
     expect(c.score).toBe(100);
@@ -127,13 +127,13 @@ describe('rankings category', () => {
   });
   test('issues are plain words, without positions', () => {
     const c = cat(buildReport('https://r.example/', facts, psi, NOW, RANK), 'rankings');
-    expect(c.issues[0]).toEqual({ problem: "You're not in the top 20 for 'plumber Austin'.", fix: 'We build pages for the searches your customers use, so you get found on Google.' });
+    expect(c.issues[0]).toEqual({ problem: "You're not on Google's first page for 'plumber in Austin TX', where most people click.", fix: 'We build pages for the searches your customers use, so you get found on Google.' });
     expect(JSON.stringify(c.issues)).not.toMatch(/#\d/);
     expect(problems(c)).toMatch(/Google Maps/);
   });
   test('unavailable reasons', () => {
     const c = (status) => cat(buildReport('https://r.example/', facts, psi, NOW, { status }), 'rankings');
-    expect(c('no-city')).toMatchObject({ score: null, status: 'unavailable', reason: 'no-city', results: [] });
+    expect(c('no-city')).toMatchObject({ score: null, status: 'unavailable', reason: 'no-city', results: [], depth: 10 });
     expect(c('no-city').issues[0].problem).toBe(NO_CITY);
     expect(c('failed').issues[0].problem).toBe(NO_CITY);
     expect(c('no-trade').issues[0].problem).toBe("We couldn't tell what your business does.");
@@ -145,7 +145,7 @@ describe('pitch', () => {
   test('first issue from each of the three lowest-scoring available categories', () => {
     const r = buildReport('https://r.example/', facts, psi, NOW, RANK);
     expect(r.pitch.headline).toBe("Here's what's costing you customers");
-    expect(r.pitch.points).toEqual([cat(r, 'speed').issues[0], cat(r, 'rankings').issues[0], cat(r, 'cta').issues[0]]);
+    expect(r.pitch.points).toEqual([cat(r, 'rankings').issues[0], cat(r, 'speed').issues[0], cat(r, 'cta').issues[0]]);
     expect(JSON.stringify(r.pitch)).not.toMatch(/rank|#1|top of google/i);
   });
   test('skips unavailable categories and ones with nothing to fix', () => {

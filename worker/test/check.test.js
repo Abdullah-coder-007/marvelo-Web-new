@@ -142,7 +142,7 @@ test('same site twice hits the cache', async () => {
   expect((await b.json()).id).toBe(first.id);
   expect(count('https://www.googleapis.com/')).toBe(1);
   expect(await env.MW.get(`report-id:${first.id}`)).not.toBeNull();
-  expect(await env.MW.get('report:https://www.rivera-plumbing.com/|columbus, oh')).not.toBeNull();
+  expect(await env.MW.get('report:https://www.rivera-plumbing.com/|columbus,OH')).not.toBeNull();
   const c = await post({ url: 'www.rivera-plumbing.com', city: ' COLUMBUS, OH', turnstileToken: 't' });
   expect((await c.json()).id).toBe(first.id);
   const d = await post({ url: 'www.rivera-plumbing.com', city: 'Austin, TX', turnstileToken: 't' });
@@ -154,7 +154,7 @@ test('unreachable site returns 200 with null score and is not cached', async () 
   const a = await post({ url: 'down.example.com', turnstileToken: 't' });
   expect(a.status).toBe(200);
   expect((await a.json()).score).toBeNull();
-  expect(await env.MW.get('report:https://down.example.com/|columbus, oh')).toBeNull();
+  expect(await env.MW.get('report:https://down.example.com/|columbus,OH')).toBeNull();
   await post({ url: 'down.example.com', turnstileToken: 't' });
   expect(count('https://www.googleapis.com/')).toBe(2);
 });
@@ -196,7 +196,10 @@ test('report carries rankings, pitch and city', async () => {
   expect(rk.status).toBe('ok');
   expect(rk.results.map((x) => x.keyword)).toEqual(['plumber near me', 'best plumber near me', 'plumber in Columbus OH', 'plumber Columbus', 'emergency plumber near me']);
   expect(rk.results[0]).toEqual({ keyword: 'plumber near me', position: 4, inMaps: false });
-  expect(rk.score).toBe(Math.round((70 + 15 * 4) / 5));
+  expect(rk.score).toBe(Math.round(70 / 5)); // position 30 is beyond the depth of 10, so it counts as not found
+  expect(rk.results[1].position).toBeNull();
+  expect(rk.depth).toBe(10);
+  expect(JSON.parse(inits[calls.findIndex((u) => u.startsWith(DFS))].body)[0].depth).toBe(10);
   expect(r.pitch.headline).toBe("Here's what's costing you customers");
   expect(r.city).toBe('Columbus, OH');
   expect(count(DFS)).toBe(5);
@@ -216,7 +219,7 @@ test('a DataForSEO failure marks rankings failed and is not cached', async () =>
   dfs = () => new Response('no', { status: 500 });
   const r = await (await post({ url: 'rivera-plumbing.com', turnstileToken: 't' })).json();
   expect(r.categories.find((c) => c.key === 'rankings')).toMatchObject({ status: 'unavailable', reason: 'failed' });
-  expect(await env.MW.get('report:https://rivera-plumbing.com/|columbus, oh')).toBeNull();
+  expect(await env.MW.get('report:https://rivera-plumbing.com/|columbus,OH')).toBeNull();
   expect(await env.MW.get(`report-id:${r.id}`)).not.toBeNull();
 });
 
@@ -239,4 +242,14 @@ test('cache hits do not count toward the per-visitor limit', async () => {
     expect((await post({ url: 'same.example.com', turnstileToken: 't' }, { ip: '6.6.6.6' })).status).toBe(200);
   }
   expect(count('https://www.googleapis.com/')).toBe(1);
+});
+
+test('"Columbus, OH" and "columbus, ohio" share one cache entry; unparsed cities use the lowercased text', async () => {
+  const a = await (await post({ url: 'share.example.com', city: 'Columbus, OH', turnstileToken: 't' })).json();
+  const b = await (await post({ url: 'share.example.com', city: 'columbus, ohio', turnstileToken: 't' })).json();
+  expect(b.id).toBe(a.id);
+  expect(count('https://www.googleapis.com/')).toBe(1);
+  expect((await env.MW.list({ prefix: 'report:https://share.example.com/' })).keys.map((k) => k.name)).toEqual(['report:https://share.example.com/|columbus,OH']);
+  await post({ url: 'share.example.com', city: 'Paris', turnstileToken: 't' });
+  expect(await env.MW.get('report:https://share.example.com/|paris')).not.toBeNull();
 });
