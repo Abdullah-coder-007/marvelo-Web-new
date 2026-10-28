@@ -166,7 +166,8 @@ const STARTER_PRICE = 999;
   new IntersectionObserver(([en]) => { builderSeen = en.isIntersecting; toggleMini(); }).observe(builder);
   // the demo counts as seen once a quarter of it is on screen
   new IntersectionObserver(([en]) => { demoSeen = en.intersectionRatio > 0.25; toggleMini(); }, { threshold: [0, 0.25, 0.5] }).observe(site);
-  const touch = () => { if (!touched) { touched = true; toggleMini(); } };
+  const touch = () => { touched = true; toggleMini(); };
+  phone.addEventListener('change', toggleMini); // e.g. a tablet rotated between widths
   mini.addEventListener('click', (e) => {
     e.preventDefault();
     site.scrollIntoView({ behavior: reducedMotion ? 'auto' : 'smooth', block: 'center' });
