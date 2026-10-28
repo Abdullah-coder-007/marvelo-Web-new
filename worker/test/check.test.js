@@ -140,3 +140,21 @@ test('unknown route -> 404 json', async () => {
   expect(res.status).toBe(404);
   expect((await res.json()).error).toBe('not-found');
 });
+
+test('cache hit carries the same CORS and vary headers', async () => {
+  await post({ url: 'cachehdr.example.com', turnstileToken: 't' });
+  const res = await post({ url: 'cachehdr.example.com', turnstileToken: 't' });
+  expect(res.status).toBe(200);
+  expect(res.headers.get('access-control-allow-origin')).toBe(ORIGIN);
+  expect(res.headers.get('vary')).toBe('Origin');
+  expect(res.headers.get('content-type')).toBe('application/json');
+});
+
+test('an internal throw -> 500 server with CORS headers', async () => {
+  vi.spyOn(env.MW, 'put').mockRejectedValue(new Error('kv down'));
+  const res = await post({ url: 'boom.example.com', turnstileToken: 't' });
+  expect(res.status).toBe(500);
+  expect((await res.json()).error).toBe('server');
+  expect(res.headers.get('access-control-allow-origin')).toBe(ORIGIN);
+  expect(res.headers.get('vary')).toBe('Origin');
+});

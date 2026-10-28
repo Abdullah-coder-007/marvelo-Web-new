@@ -15,7 +15,7 @@ function respond(data, status, origin, extra = {}) {
     headers['access-control-allow-origin'] = origin;
     headers.vary = 'Origin';
   }
-  return new Response(data === null ? null : JSON.stringify(data), { status, headers });
+  return new Response(data === null ? null : typeof data === 'string' ? data : JSON.stringify(data), { status, headers });
 }
 
 async function handleCheck(request, env, origin) {
@@ -41,7 +41,7 @@ async function handleCheck(request, env, origin) {
 
   const cacheKey = `report:${url.href}`;
   const cached = await env.MW.get(cacheKey);
-  if (cached) return new Response(cached, { status: 200, headers: { 'content-type': 'application/json', 'access-control-allow-origin': origin, vary: 'Origin' } });
+  if (cached) return respond(cached, 200, origin);
 
   try {
     await assertPublicHost(url);
@@ -78,7 +78,11 @@ export default {
     }
 
     const { pathname } = new URL(request.url);
-    if (pathname === '/check' && request.method === 'POST') return handleCheck(request, env, o);
-    return respond({ error: 'not-found' }, 404, o);
+    try {
+      if (pathname === '/check' && request.method === 'POST') return await handleCheck(request, env, o);
+      return respond({ error: 'not-found' }, 404, o);
+    } catch {
+      return respond({ error: 'server' }, 500, o);
+    }
   },
 };
