@@ -12,6 +12,7 @@ export async function createLead(env, f) {
     id: crypto.randomUUID(),
     createdAt: Date.now(),
     website: f.website, name: f.name, email: f.email, phone: f.phone, business: f.business, extras: f.extras,
+    trade: f.trade, issues: f.issues, city: f.city,
     reportId: f.reportId,
     emailed: false, attempts: 0, lastAttemptAt: null,
   };
@@ -66,6 +67,10 @@ export async function runCron(env, now) {
     cursor = page.list_complete ? undefined : page.cursor;
   } while (cursor);
 
+  if (!env.LEAD_EMAIL_TO) {
+    console.error('LEAD_EMAIL_TO not set');
+    return;
+  }
   due.sort((a, b) => a.createdAt - b.createdAt);
   for (const { id } of due.slice(0, MAX_PER_RUN)) {
     try {

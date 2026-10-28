@@ -247,9 +247,13 @@
       // Pages that define window.MW.sendLead (redesign) try the server first; anything else, or a failure, uses email
       let sent = false;
       if (window.MW && typeof window.MW.sendLead === 'function') {
+        const label = submitBtn && submitBtn.firstChild;
+        const was = label && label.nodeType === 3 ? label.nodeValue : null;
         if (submitBtn) submitBtn.disabled = true;
+        if (was !== null) label.nodeValue = 'Sending… ';
         sent = await window.MW.sendLead(form).catch(() => false);
         if (submitBtn) submitBtn.disabled = false;
+        if (was !== null) label.nodeValue = was;
       }
       const sentBox = done.querySelector('[data-done-sent]');
       const mailBox = done.querySelector('[data-done-mail]');

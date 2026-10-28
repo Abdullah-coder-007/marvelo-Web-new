@@ -78,6 +78,15 @@ test('LocalBusiness subtype counts and old copyright fails', () => {
   expect(scores(r).design).toBe(90);
 });
 
+test('common LocalBusiness subtypes such as HVACBusiness and VeterinaryCare count', () => {
+  for (const type of ['HVACBusiness', 'VeterinaryCare', 'Locksmith', 'HousePainter', 'MovingCompany', 'Florist']) {
+    const f = { ...facts, description: 'x'.repeat(80), descriptionLength: 80, jsonLdTypes: [type], copyrightYear: 2026 };
+    expect(scores(buildReport('https://r.example/', f, null, NOW)).seo, type).toBe(100);
+  }
+  const none = { ...facts, description: 'x'.repeat(80), descriptionLength: 80, jsonLdTypes: ['WebSite'], copyrightYear: 2026 };
+  expect(scores(buildReport('https://r.example/', none, null, NOW)).seo).toBe(85);
+});
+
 describe('deeper SEO and design checks', () => {
   test('title must be 30 to 65 characters', () => {
     expect(seoIssues({ title: 'x'.repeat(25), titleLength: 25 })).toMatch(/title is too short/);

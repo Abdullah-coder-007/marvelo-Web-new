@@ -26,7 +26,8 @@ function reportLines(report) {
 export async function sendLeadEmail(env, { lead, report }, fetchImpl = fetch) {
   const fields = [
     ['Business', lead.business], ['Name', lead.name], ['Email', lead.email], ['Phone', lead.phone],
-    ['Website', lead.website], ['Notes', lead.extras],
+    ['Website', lead.website], ['Trade', lead.trade], ['City', lead.city],
+    ['Warning signs', lead.issues], ['Notes', lead.extras],
   ].filter(([, v]) => v);
   const lines = reportLines(report);
 

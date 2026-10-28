@@ -142,3 +142,9 @@ test('robots.txt and sitemap are null when they cannot be fetched, and never rea
   const r = await fetchPage(new URL('https://good.example/'), { fetch, resolve: PUB });
   expect(r.facts).toMatchObject({ robotsTxt: null, sitemap: null });
 });
+
+test('a malformed tel: href falls back to the raw value', async () => {
+  const f = await scanHtml(htmlResponse('<a href="tel:%E0%A4%A">call</a>', 'https://x.example/'));
+  expect(f.telLinks).toBe(1);
+  expect(f.phone).toBe('%E0%A4%A');
+});

@@ -112,6 +112,7 @@ async function handleEnhance(request, env, origin) {
   const f = {
     website: str(body.website, 300), name: str(body.name, 200), email: str(body.email, 200),
     phone: str(body.phone, 50), business: str(body.business, 200), extras: str(body.extras, 2000),
+    trade: str(body.trade, 100), issues: str(body.issues, 1000), city: str(body.city, 100),
     reportId: null,
   };
   if (!EMAIL_RE.test(f.email) || !f.phone || !f.website) return err('invalid', 400);

@@ -1,7 +1,8 @@
 import { SEARCH_DEPTH } from './rankings.js';
 
 const MAX_ISSUES = 4;
-const LOCAL_TYPE = /LocalBusiness|Plumber|Electrician|Dentist|Restaurant|Store|Contractor|Salon|Attorney|Physician|AutoRepair|HomeAndConstructionBusiness/i;
+// Any schema.org type that is a kind of local business: a suffix match plus an explicit list (case-insensitive).
+const LOCAL_TYPE = /(Business|Service|Store|Contractor|Clinic|Office|Agency|Restaurant|Salon)$|^(Plumber|Electrician|Dentist|Locksmith|HousePainter|MovingCompany|Florist|VeterinaryCare|Attorney|Physician|AutoRepair|RoofingContractor|GeneralContractor|Notary|Optician|Pharmacy|Hospital|Bakery|Dermatology|Gym|SportsClub|DaySpa|Winery|Library|TravelAgency|InsuranceAgency|RealEstateAgent|Accountant|AutoDealer|BarOrPub|CafeOrCoffeeShop|Hotel|Motel|Resort|ChildCare|Church|Campground|Physiotherapy|MedicalBusiness|AutomotiveBusiness|TattooParlor|HairSalon|NailSalon|HealthClub)$/i;
 const PITCH_HEADLINE = "Here's what's costing you customers";
 
 const clamp = (n) => Math.max(0, Math.min(100, n));

@@ -1,5 +1,5 @@
 const ENDPOINT = 'https://api.dataforseo.com/v3/serp/google/organic/live/advanced';
-const TIMEOUT_MS = 30_000;
+const TIMEOUT_MS = 20_000;
 // DataForSEO may bill per page of 10 results, so one page per search keeps a check near 1 cent.
 export const SEARCH_DEPTH = 10;
 export const SEARCHES_PER_CHECK = 5;

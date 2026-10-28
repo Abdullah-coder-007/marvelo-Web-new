@@ -95,6 +95,7 @@ const TURNSTILE_SITE_KEY = '';
 
   // ---------- website check report ----------
   const submitBtn = urlForm.querySelector('button[type="submit"]');
+  if (API_BASE && submitBtn.firstChild) submitBtn.firstChild.nodeValue = 'Check my website '; // the label only changes while the check is switched on
   const reportEl = $('report');
   const statusEl = $('report-status');
   const stepsEl = $('report-steps');
@@ -116,7 +117,7 @@ const TURNSTILE_SITE_KEY = '';
     document.head.appendChild(s);
   }));
   // A fresh token for every check. Every way it can stall ends in a rejection, so the button never stays locked.
-  const getToken = async () => {
+  const getToken = async (box = $('ts-box')) => {
     if (!TURNSTILE_SITE_KEY) return '';
     const ts = await loadTurnstile();
     return new Promise((resolve, reject) => {
@@ -124,7 +125,7 @@ const TURNSTILE_SITE_KEY = '';
       const done = (fn, v) => { clearTimeout(t); try { ts.remove(id); } catch (e) {} fn(v); };
       const t = setTimeout(() => done(reject, new Error('turnstile')), TOKEN_TIMEOUT);
       const stall = () => done(reject, new Error('turnstile'));
-      id = ts.render($('ts-box'), {
+      id = ts.render(box, {
         sitekey: TURNSTILE_SITE_KEY,
         appearance: 'interaction-only',
         callback: (tok) => done(resolve, tok),
@@ -352,7 +353,7 @@ const TURNSTILE_SITE_KEY = '';
           data[el.name] = el.value.trim();
         });
         data.reportId = window.MW.lastReportId || null;
-        data.turnstileToken = await getToken();
+        data.turnstileToken = await getToken($('ts-box-lead'));
         timer = setTimeout(() => abort.abort(), 20000);
         const res = await fetch(`${API_BASE}/enhance`, {
           method: 'POST',
@@ -376,7 +377,14 @@ const TURNSTILE_SITE_KEY = '';
     const first = ['s-site', 's-biz'].map($).find((el) => !el.value.trim()) || $('s-biz');
     setTimeout(() => first.focus({ preventScroll: true }), reducedMotion ? 0 : 600);
   });
-  $('report-print').addEventListener('click', () => window.print());
+  $('report-print').addEventListener('click', () => {
+    const root = document.documentElement;
+    const clear = () => { root.classList.remove('print-report'); window.removeEventListener('afterprint', clear); };
+    root.classList.add('print-report');
+    window.addEventListener('afterprint', clear);
+    setTimeout(clear, 60000); // fallback if afterprint never fires
+    window.print();
+  });
 
   // ---------- warning-signs checklist ----------
   const boxes = [...document.querySelectorAll('#check-list input')];

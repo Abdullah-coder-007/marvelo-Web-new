@@ -106,7 +106,12 @@ export async function scanHtml(res, finalUrl = res.url) {
     .on('a[href^="tel:" i]', {
       element(el) {
         f.telLinks++;
-        if (!f.phone) f.phone = decodeURIComponent(el.getAttribute('href').slice(4)).replace(/\s+/g, '') || null;
+        if (!f.phone) {
+          const raw = el.getAttribute('href').slice(4);
+          let v;
+          try { v = decodeURIComponent(raw); } catch { v = raw; }
+          f.phone = v.replace(/\s+/g, '') || null;
+        }
       },
     })
     .on('a, button', {

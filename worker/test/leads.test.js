@@ -201,3 +201,42 @@ test('cron deletes leads older than 90 days and any old preview records', async 
   expect(await env.MW.get('preview:old')).toBeNull();
   expect(await env.MW.get('lead:new')).not.toBeNull();
 });
+
+test('trade, issues and city reach the stored lead and the email (escaped)', async () => {
+  await enhance({ ...form, trade: 'Plumbing', issues: 'Slow site; <i>no calls</i>', city: 'Austin, TX' });
+  const [id] = await leadIds();
+  const lead = await getLead(id);
+  expect(lead).toMatchObject({ trade: 'Plumbing', issues: 'Slow site; <i>no calls</i>', city: 'Austin, TX' });
+  await cron();
+  const [mail] = emails();
+  expect(mail.text).toContain('Trade: Plumbing');
+  expect(mail.text).toContain('City: Austin, TX');
+  expect(mail.text).toContain('Warning signs: Slow site; <i>no calls</i>');
+  expect(mail.html).toContain('Plumbing');
+  expect(mail.html).toContain('Austin, TX');
+  expect(mail.html).toContain('&lt;i&gt;no calls&lt;/i&gt;');
+  expect(mail.html).not.toContain('<i>no calls</i>');
+});
+
+test('without LEAD_EMAIL_TO cron sends nothing, leaves attempts alone, but still deletes old leads', async () => {
+  const now = new Date();
+  await seedLead('fresh', {});
+  await seedLead('old', { createdAt: now.getTime() - 91 * 86400000, emailed: true });
+  const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+  await runCron({ MW: env.MW, RESEND_API_KEY: 'k' }, now);
+  expect(err).toHaveBeenCalledWith('LEAD_EMAIL_TO not set');
+  expect(emails().length).toBe(0);
+  const lead = await getLead('fresh');
+  expect(lead.attempts).toBe(0);
+  expect(lead.lastAttemptAt ?? null).toBeNull();
+  expect(await env.MW.get('lead:old')).toBeNull();
+});
+
+test('a failed KV counter write still lets the request through', async () => {
+  const { rateLimit, capDaily } = await import('../src/limits.js');
+  const broken = { MW: { get: async () => null, put: async () => { throw new Error('kv down'); } } };
+  const err = vi.spyOn(console, 'error').mockImplementation(() => {});
+  expect(await rateLimit(broken, 'enhance:1.1.1.1', 2, 86400)).toBe(true);
+  expect(await capDaily(broken, 'check', 200)).toBe(true);
+  expect(err.mock.calls.flat().join(' ')).not.toContain('1.1.1.1');
+});
