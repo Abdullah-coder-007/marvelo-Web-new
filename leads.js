@@ -1,5 +1,5 @@
 // Private leads page. While API_BASE is empty nothing below talks to the network.
-const API_BASE = '';
+const API_BASE = 'https://marveloweb-api.twilight-frog-a541.workers.dev';
 
 (function () {
   const STORE_KEY = 'mw-admin-key';
