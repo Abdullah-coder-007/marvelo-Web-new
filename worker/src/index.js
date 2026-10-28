@@ -3,6 +3,7 @@ import { fetchPage } from './page-scan.js';
 import { runPsi } from './psi.js';
 import { buildReport } from './report.js';
 import { verifyTurnstile, rateLimit } from './limits.js';
+import { createLead, processLead, runCron, safeEqual } from './leads.js';
 
 const REPORT_TTL = 86400;
 const REPORT_ID_TTL = 90 * 86400;
@@ -62,8 +63,64 @@ async function handleCheck(request, env, origin) {
   return respond(report, 200, origin);
 }
 
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const ENHANCE_MAX = 2;
+const ENHANCE_WINDOW = 86400;
+const str = (v, max) => (typeof v === 'string' ? v.trim().slice(0, max) : '');
+
+async function handleEnhance(request, env, ctx, origin) {
+  const err = (error, status) => respond({ error }, status, origin);
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return err('invalid', 400);
+  }
+  if (!body || typeof body !== 'object') return err('invalid', 400);
+
+  const ip = request.headers.get('cf-connecting-ip') || 'unknown';
+  if (!(await verifyTurnstile(body.turnstileToken, ip, env))) return err('bot', 403);
+  if (!(await rateLimit(env, `enhance:${ip}`, ENHANCE_MAX, ENHANCE_WINDOW))) return err('limit', 429);
+
+  const f = {
+    website: str(body.website, 300), name: str(body.name, 200), email: str(body.email, 200),
+    phone: str(body.phone, 50), business: str(body.business, 200), extras: str(body.extras, 2000),
+    reportId: null,
+  };
+  if (!EMAIL_RE.test(f.email) || !f.phone || !f.website) return err('invalid', 400);
+
+  const rid = str(body.reportId, 100);
+  if (rid && (await env.MW.get(`report-id:${rid}`))) f.reportId = rid;
+
+  const lead = await createLead(env, f);
+  ctx.waitUntil(processLead(env, lead.id));
+  return respond({ ok: true }, 202, origin);
+}
+
+async function handlePreview(url, env, origin) {
+  const m = /^\/p\/([0-9A-Za-z-]{1,64})$/.exec(url.pathname);
+  const notFound = () => respond({ error: 'not-found' }, 404, origin);
+  if (!m) return notFound();
+  const raw = await env.MW.get(`lead:${m[1]}`);
+  const html = raw ? await env.MW.get(`preview:${m[1]}`) : null;
+  if (!html || !safeEqual(JSON.parse(raw).previewKey, url.searchParams.get('k'))) return notFound();
+  return new Response(html, {
+    status: 200,
+    headers: {
+      'content-type': 'text/html; charset=utf-8',
+      'x-robots-tag': 'noindex, nofollow',
+      'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https:",
+      'cache-control': 'private',
+    },
+  });
+}
+
 export default {
-  async fetch(request, env) {
+  async scheduled(event, env, ctx) {
+    ctx.waitUntil(runCron(env, new Date(event.scheduledTime)));
+  },
+
+  async fetch(request, env, ctx) {
     const origin = request.headers.get('origin');
     const allowed = (env.ALLOWED_ORIGINS || '').split(',').map((s) => s.trim()).filter(Boolean);
     if (origin && !allowed.includes(origin)) return respond({ error: 'forbidden' }, 403, null);
@@ -77,11 +134,15 @@ export default {
       });
     }
 
-    const { pathname } = new URL(request.url);
+    const url = new URL(request.url);
+    const { pathname } = url;
     try {
       if (pathname === '/check' && request.method === 'POST') return await handleCheck(request, env, o);
+      if (pathname === '/enhance' && request.method === 'POST') return await handleEnhance(request, env, ctx, o);
+      if (pathname.startsWith('/p/') && request.method === 'GET') return await handlePreview(url, env, o);
       return respond({ error: 'not-found' }, 404, o);
-    } catch {
+    } catch (e) {
+      console.error(e);
       return respond({ error: 'server' }, 500, o);
     }
   },
