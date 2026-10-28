@@ -233,6 +233,30 @@ html:has(.pick[open]) { overflow: hidden; }
   text-transform: uppercase; background: var(--ink); color: var(--paper); padding: 1px 8px; border-radius: 99px;
 }
 
+/* Phones: each row becomes a card (question, the two other routes, then MarveloWeb highlighted),
+   so nothing hides off to the right. new.js adds data-stacked and the data-label on each answer. */
+@media (max-width: 640px) {
+  .compare__table[data-stacked] { min-width: 0; display: block; }
+  .compare__table[data-stacked] thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+  .compare__table[data-stacked] tbody, .compare__table[data-stacked] tr { display: block; }
+  .compare__table[data-stacked] tr { padding: 18px 16px; border-bottom: 1px solid var(--line); }
+  .compare__table[data-stacked] tbody tr:last-child { border-bottom: 0; }
+  .compare__table[data-stacked] tbody tr:hover > * { background: none; }
+  .compare__table[data-stacked] tbody th { display: block; width: auto; padding: 0 0 8px; border: 0; font-size: 17px; letter-spacing: -.01em; }
+  .compare__table[data-stacked] td, .compare__table[data-stacked] tbody tr:hover > td {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 8px 0; border: 0;
+    border-top: 1px dashed var(--line); font-size: 15px; text-align: right; background: none;
+  }
+  .compare__table[data-stacked] td::before { content: attr(data-label); color: var(--muted); font-weight: 500; text-align: left; flex: none; }
+  .compare__table[data-stacked] td.us, .compare__table[data-stacked] tbody tr:hover > td.us {
+    margin-top: 8px; padding: 11px 12px; border: 1.5px solid var(--ink); border-radius: 12px; background: #FFE3EC; font-size: 15.5px;
+  }
+  .compare__table[data-stacked] td.us::before {
+    position: static; width: auto; height: auto; margin: 0; border-radius: 0; color: var(--ink); font-weight: 800;
+    padding-left: 28px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Ccircle cx='12' cy='12' r='11' fill='%230F0F12'/%3E%3Cpath d='M7 12.5l3.2 3.2L17 9' fill='none' stroke='%23FF3D7F' stroke-width='2.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") left center / 20px no-repeat;
+  }
+}
+
 /* ---------- pricing: speed switch, Growth extras, rush box ---------- */
 .speed {
   display: flex; width: fit-content; max-width: 100%; margin: 0 auto clamp(28px, 4vw, 44px); padding: 5px; gap: 4px;

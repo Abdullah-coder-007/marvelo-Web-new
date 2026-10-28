@@ -228,6 +228,14 @@ const STARTER_PRICE = 999;
     setInterval(() => { if (auto && !paused && visible && !document.hidden) show((at + 1) % buttons.length); }, 3200);
   }
 
+  // ---------- comparison: label each answer so phones can show the table as stacked cards ----------
+  const compare = document.querySelector('.compare__table');
+  if (compare) {
+    const heads = [...compare.querySelectorAll('thead th')].map((th) => th.textContent.replace('Easiest', '').trim());
+    compare.querySelectorAll('tbody tr').forEach((tr) => tr.querySelectorAll('td').forEach((td, i) => (td.dataset.label = heads[i + 1])));
+    compare.dataset.stacked = '';
+  }
+
   // ---------- real work: one card per launched site ----------
   if (LIVE_SITES.length) {
     const grid = $('real-grid');
