@@ -81,3 +81,23 @@ test('maps timeouts and other failures', async () => {
   const boom = async () => { throw new TypeError('network'); };
   expect(await fetchPage(new URL('https://a.example/'), { fetch: boom, resolve: PUB })).toEqual({ facts: null, error: 'fetch-failed' });
 });
+test('copyright year is found in a footer past the 4000-char text cap', async () => {
+  const f = await scanHtml(htmlResponse(`<body><p>${'word '.repeat(3000)}</p><footer>&copy; 2019 Foo</footer></body>`, 'https://x.example/'));
+  expect(f.text.length).toBe(4000);
+  expect(f.copyrightYear).toBe(2019);
+});
+test('reads at most ~2 MB of an oversized HTML page and still returns facts', async () => {
+  const enc = new TextEncoder();
+  const chunk = enc.encode('<p>' + 'a'.repeat(99_990) + '</p>');
+  let pulled = 0, cancelled = false;
+  const body = new ReadableStream({
+    pull(c) { pulled += chunk.length; c.enqueue(chunk); },
+    cancel() { cancelled = true; },
+  }, { highWaterMark: 0 });
+  const big = async () => new Response(body, { headers: { 'content-type': 'text/html' } });
+  const r = await fetchPage(new URL('https://big.example/'), { fetch: big, resolve: PUB });
+  expect(r.error).toBeNull();
+  expect(r.facts).not.toBeNull();
+  expect(cancelled).toBe(true);
+  expect(pulled).toBeLessThanOrEqual(2_000_000 + chunk.length);
+});

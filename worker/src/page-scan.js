@@ -101,12 +101,13 @@ export async function scanHtml(res, finalUrl = res.url) {
       },
       text(t) { if (heading) heading.text += t.text; },
     })
-    .on('body', { text(t) { if (!skip && text.length < TEXT_CAP * 2) text += t.text; } });
+    .on('body', { text(t) { if (!skip) text += t.text; } });
 
   await rewriter.transform(new Response(bytes, { headers: { 'content-type': 'text/html' } })).arrayBuffer();
 
   f.title = clean(titleRaw);
-  f.text = clean(text.replace(/&copy;/gi, '©').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&')).slice(0, TEXT_CAP);
+  const fullText = clean(text.replace(/&copy;/gi, '©').replace(/&nbsp;/gi, ' ').replace(/&amp;/gi, '&'));
+  f.text = fullText.slice(0, TEXT_CAP);
 
   const types = new Set();
   for (const block of ldRaw.split('\u0000')) {
@@ -126,7 +127,7 @@ export async function scanHtml(res, finalUrl = res.url) {
   f.jsonLdTypes = [...types];
 
   let year = null;
-  for (const m of f.text.matchAll(/(?:©|copyright)[^0-9]{0,20}((?:19|20)\d{2})(?:\s*[-–]\s*((?:19|20)\d{2}))?/gi)) {
+  for (const m of fullText.matchAll(/(?:©|copyright)[^0-9]{0,20}((?:19|20)\d{2})(?:\s*[-–]\s*((?:19|20)\d{2}))?/gi)) {
     for (const y of [m[1], m[2]]) if (y && (year === null || Number(y) > year)) year = Number(y);
   }
   f.copyrightYear = year;
