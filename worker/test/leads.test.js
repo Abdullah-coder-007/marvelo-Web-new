@@ -3,30 +3,22 @@ import { SELF, env } from 'cloudflare:test';
 import { runCron } from '../src/leads.js';
 
 const ORIGIN = 'https://marveloweb.com';
-const HTML = '<html><head><title>Rivera Plumbing</title></head><body><h1>Hi</h1></body></html>';
-const GOOD = '```html\n<html><body>New site<script>x()</script></body></html>\n```';
-let calls, claude, resendOk;
+let calls, resendOk;
 
 function mockNetwork() {
   calls = [];
-  claude = () => Response.json({ stop_reason: 'end_turn', content: [{ type: 'thinking', thinking: '' }, { type: 'text', text: GOOD }] });
   resendOk = true;
   vi.spyOn(globalThis, 'fetch').mockImplementation(async (input, init) => {
     const url = typeof input === 'string' ? input : input.url;
     calls.push({ url, init });
     if (url.startsWith('https://challenges.cloudflare.com/')) return Response.json({ success: true });
-    if (url.startsWith('https://cloudflare-dns.com/')) {
-      const type = new URL(url).searchParams.get('type');
-      return Response.json({ Answer: type === 'A' ? [{ type: 1, data: '93.184.215.14' }] : [] });
-    }
-    if (url.startsWith('https://api.anthropic.com/')) return claude();
     if (url.startsWith('https://api.resend.com/')) return resendOk ? Response.json({ id: 'm1' }) : new Response('no', { status: 500 });
-    return new Response(HTML, { headers: { 'content-type': 'text/html' } });
+    return new Response('unexpected', { status: 599 });
   });
 }
 const emails = () => calls.filter((c) => c.url.startsWith('https://api.resend.com/')).map((c) => JSON.parse(c.init.body));
 const cron = (now = new Date()) => runCron(env, now);
-const anthropicCalls = () => calls.filter((c) => c.url.startsWith('https://api.anthropic.com/')).length;
+const otherCalls = () => calls.filter((c) => !/^https:\/\/(api\.resend\.com|challenges\.cloudflare\.com)\//.test(c.url)).length;
 
 const form = { website: 'rivera-plumbing.com', name: 'Ana <b>Rivera</b>', email: 'ana@example.com', phone: '555-0100', business: 'Rivera Plumbing', extras: 'more', turnstileToken: 't' };
 function enhance(body, { ip = '2.2.2.2', origin = ORIGIN, raw } = {}) {
@@ -39,6 +31,16 @@ function enhance(body, { ip = '2.2.2.2', origin = ORIGIN, raw } = {}) {
 const leadIds = async () => (await env.MW.list({ prefix: 'lead:' })).keys.map((k) => k.name.slice(5));
 const getLead = async (id) => JSON.parse(await env.MW.get(`lead:${id}`));
 
+const REPORT = {
+  id: 'r1', url: 'https://rivera-plumbing.com/', city: 'Austin, TX', score: 55, verdict: 'Your website is holding you back.',
+  categories: [
+    { key: 'speed', title: 'Speed on phones', score: 40, issues: [{ problem: 'Slow page', fix: 'f' }] },
+    { key: 'rankings', title: 'Found on Google', score: 15, status: 'ok', issues: [{ problem: "You're not in the top 20 for 'plumber near me'.", fix: 'x' }],
+      results: [{ keyword: 'plumber near me', position: 14, inMaps: true }, { keyword: 'plumber Austin', position: null, inMaps: false }] },
+  ],
+  pitch: { headline: "Here's what's costing you customers", points: [{ problem: 'Slow page', fix: 'We rebuild it.' }] },
+};
+
 beforeEach(async () => {
   mockNetwork();
   const { keys } = await env.MW.list();
@@ -46,7 +48,7 @@ beforeEach(async () => {
 });
 afterEach(() => vi.restoreAllMocks());
 
-test('enhance replies 202 and does no preview work itself', async () => {
+test('enhance replies 202 and only stores the lead', async () => {
   const res = await enhance(form);
   expect(res.status).toBe(202);
   expect(await res.json()).toEqual({ ok: true });
@@ -54,57 +56,56 @@ test('enhance replies 202 and does no preview work itself', async () => {
   const lead = await getLead(id);
   expect(lead.emailed).toBe(false);
   expect(lead.attempts).toBe(0);
-  expect(lead.previewKey).toMatch(/^[0-9A-Za-z]{32}$/);
   expect(lead.email).toBe('ana@example.com');
-  expect(anthropicCalls()).toBe(0);
-  expect(await env.MW.get(`preview:${id}`)).toBeNull();
+  expect('previewKey' in lead).toBe(false);
+  expect(emails().length).toBe(0);
+  expect(otherCalls()).toBe(0);
 });
 
-test('a fresh lead gets its preview and email on the first cron run', async () => {
+test('a fresh lead is emailed on the first cron run without fetching anything else', async () => {
   await enhance(form);
   const [id] = await leadIds();
   await cron();
-  expect(anthropicCalls()).toBe(1);
   expect((await getLead(id)).emailed).toBe(true);
   expect((await getLead(id)).lastAttemptAt).toBeTruthy();
   expect(emails().length).toBe(1);
+  expect(otherCalls()).toBe(0);
 });
 
-test('enhance builds preview, emails owner with link, escapes HTML', async () => {
-  await env.MW.put('report-id:r1', JSON.stringify({ id: 'r1', url: 'https://rivera-plumbing.com/', score: 55, verdict: 'v', categories: [{ title: 'Speed on phones', score: 40, issues: [{ problem: 'Slow page', fix: 'f' }] }] }));
+test('lead email contains the report, has no preview link, escapes HTML', async () => {
+  await env.MW.put('report-id:r1', JSON.stringify(REPORT));
   const res = await enhance({ ...form, reportId: 'r1' });
   expect(res.status).toBe(202);
   const [id] = await leadIds();
   await cron();
-  const lead = await getLead(id);
-  expect(lead.emailed).toBe(true);
-  expect(await env.MW.get(`preview:${id}`)).toBe('<html><body>New site</body></html>');
+  expect((await getLead(id)).emailed).toBe(true);
   const [mail] = emails();
   expect(mail.from).toContain('leads@marveloweb.com');
   expect(mail.to).toEqual(['owner@test.example']);
   expect(mail.reply_to).toBe('ana@example.com');
-  expect(mail.subject).toContain('Rivera Plumbing');
-  expect(mail.subject.startsWith('Preview failed:')).toBe(false);
-  expect(mail.text).toContain(`https://api.marveloweb.com/p/${id}?k=${lead.previewKey}`);
-  expect(mail.text).toContain('55');
-  expect(mail.text).toContain('Slow page');
+  expect(mail.subject).toBe('New lead: Rivera Plumbing');
+  for (const body of [mail.text, mail.html]) {
+    expect(body).toContain('55');
+    expect(body).toContain('Slow page');
+    expect(body).toContain('Found on Google');
+    expect(body).toContain('#14');
+    expect(body).toContain('Not in the top 100');
+    expect(body).toContain('Austin, TX');
+    expect(body).not.toContain('/p/');
+    expect(body).not.toMatch(/preview/i);
+  }
+  expect(mail.text).toContain("plumber near me: #14 (in Google Maps)");
   expect(mail.html).toContain('&lt;b&gt;Rivera&lt;/b&gt;');
   expect(mail.html).not.toContain('<b>Rivera</b>');
   const auth = calls.find((c) => c.url.startsWith('https://api.resend.com/')).init.headers.authorization;
   expect(auth).toBe('Bearer test-resend');
-  const cl = calls.find((c) => c.url.startsWith('https://api.anthropic.com/'));
-  const body = JSON.parse(cl.init.body);
-  expect(body.model).toBe('claude-sonnet-5-5');
-  expect(body.max_tokens).toBe(16000);
-  expect(cl.init.headers['anthropic-version']).toBe('2023-06-01');
-  expect(cl.init.headers['x-api-key']).toBe('test-anthropic');
 });
 
 test('without a report the email says so', async () => {
   await enhance(form);
-  const [id] = await leadIds();
   await cron();
   expect(emails()[0].text).toContain('No website check was run.');
+  expect(emails()[0].subject).toBe('New lead: Rivera Plumbing');
 });
 
 test('missing phone -> 400', async () => {
@@ -115,17 +116,6 @@ test('missing phone -> 400', async () => {
   expect((await enhance({ ...form, website: '' }, { ip: '3.3.3.3' })).status).toBe(400);
   expect((await enhance(null, { raw: '{bad', ip: '3.3.3.4' })).status).toBe(400);
   expect(await leadIds()).toEqual([]);
-});
-
-test('Claude failure still emails with "Preview failed:" subject', async () => {
-  claude = () => new Response('boom', { status: 500 });
-  await enhance(form);
-  const [id] = await leadIds();
-  await cron();
-  const [mail] = emails();
-  expect(mail.subject.startsWith('Preview failed:')).toBe(true);
-  expect(mail.text).not.toContain('/p/');
-  expect(await env.MW.get(`preview:${id}`)).toBeNull();
 });
 
 test('third enhance in a day -> 429', async () => {
@@ -141,9 +131,8 @@ test('bad turnstile -> 403', async () => {
 });
 
 async function seedLead(id, over) {
-  const lead = { id, createdAt: Date.now(), website: 'a.com', name: 'N', email: 'n@example.com', phone: '1', business: 'B', extras: '', reportId: null, previewKey: 'p'.repeat(32), emailed: false, attempts: 0, failedReason: null, ...over };
+  const lead = { id, createdAt: Date.now(), website: 'a.com', name: 'N', email: 'n@example.com', phone: '1', business: 'B', extras: '', reportId: null, emailed: false, attempts: 0, ...over };
   await env.MW.put(`lead:${id}`, JSON.stringify(lead));
-  await env.MW.put(`preview:${id}`, '<html></html>');
 }
 
 test('email failure is retried by cron, max 24', async () => {
@@ -164,7 +153,6 @@ test('email failure is retried by cron, max 24', async () => {
   expect((await getLead('t23')).emailed).toBe(true);
   expect((await getLead('t24')).emailed).toBe(false);
   expect((await getLead('t24')).attempts).toBe(24);
-  expect(anthropicCalls()).toBe(1); // Claude not called again on the email retry
 });
 
 test('cron skips a lead attempted 30 min ago and retries one attempted 61 min ago', async () => {
@@ -196,13 +184,20 @@ test('a corrupt lead record does not stop the others', async () => {
   expect(await env.MW.get('lead:bad')).toBe('{not json');
 });
 
-test('cron deletes leads older than 90 days with their previews', async () => {
+test('an old lead from before the change, with a previewKey, is still emailed', async () => {
+  await seedLead('legacy', { previewKey: 'p'.repeat(32), failedReason: null });
+  await cron();
+  expect((await getLead('legacy')).emailed).toBe(true);
+  expect(emails()[0].text).not.toContain('/p/');
+});
+
+test('cron deletes leads older than 90 days and any old preview records', async () => {
   const now = new Date();
   await seedLead('old', { createdAt: now.getTime() - 91 * 86400000, emailed: true });
+  await env.MW.put('preview:old', '<html></html>');
   await seedLead('new', { createdAt: now.getTime() - 10 * 86400000, emailed: true });
   await runCron(env, now);
   expect(await env.MW.get('lead:old')).toBeNull();
   expect(await env.MW.get('preview:old')).toBeNull();
   expect(await env.MW.get('lead:new')).not.toBeNull();
-  expect(await env.MW.get('preview:new')).not.toBeNull();
 });

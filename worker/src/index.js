@@ -2,13 +2,15 @@ import { GuardError, normalizeUrl, assertPublicHost } from './url-guard.js';
 import { fetchPage } from './page-scan.js';
 import { runPsi } from './psi.js';
 import { buildReport } from './report.js';
-import { verifyTurnstile, rateLimit } from './limits.js';
-import { createLead, runCron, safeEqual } from './leads.js';
+import { verifyTurnstile, rateLimit, capDaily } from './limits.js';
+import { parseCity, detectTrade, runRankings } from './rankings.js';
+import { createLead, runCron } from './leads.js';
 
 const REPORT_TTL = 86400;
 const REPORT_ID_TTL = 90 * 86400;
 const CHECK_MAX = 5;
 const CHECK_WINDOW = 3600;
+const CHECK_DAILY_CAP = 200;
 
 function respond(data, status, origin, extra = {}) {
   const headers = { 'content-type': 'application/json', ...extra };
@@ -17,6 +19,15 @@ function respond(data, status, origin, extra = {}) {
     headers.vary = 'Origin';
   }
   return new Response(data === null ? null : typeof data === 'string' ? data : JSON.stringify(data), { status, headers });
+}
+
+async function rankingsFor(url, facts, city, env) {
+  const loc = parseCity(city);
+  if (!loc) return { status: 'no-city' };
+  const trade = detectTrade(facts);
+  if (!trade) return { status: 'no-trade' };
+  const r = await runRankings(url.hostname, trade, loc, env);
+  return r ? { status: 'ok', results: r.results } : { status: 'failed' };
 }
 
 async function handleCheck(request, env, origin) {
@@ -31,7 +42,6 @@ async function handleCheck(request, env, origin) {
 
   const ip = request.headers.get('cf-connecting-ip') || 'unknown';
   if (!(await verifyTurnstile(body.turnstileToken, ip, env))) return err('bot', 403);
-  if (!(await rateLimit(env, `check:${ip}`, CHECK_MAX, CHECK_WINDOW))) return err('limit', 429);
 
   let url;
   try {
@@ -39,8 +49,11 @@ async function handleCheck(request, env, origin) {
   } catch (e) {
     return err(e instanceof GuardError ? e.code : 'invalid', 400);
   }
+  const city = typeof body.city === 'string' ? body.city.replace(/\s+/g, ' ').trim() : '';
+  if (!city || city.length > 100) return err('invalid', 400);
 
-  const cacheKey = `report:${url.href}`;
+  // Cache hits are free, so they come before both limits.
+  const cacheKey = `report:${url.href}|${city.toLowerCase()}`;
   const cached = await env.MW.get(cacheKey);
   if (cached) return respond(cached, 200, origin);
 
@@ -49,16 +62,28 @@ async function handleCheck(request, env, origin) {
   } catch {
     return err('private', 400);
   }
+  if (!(await rateLimit(env, `check:${ip}`, CHECK_MAX, CHECK_WINDOW))) return err('limit', 429);
+  if (!(await capDaily(env, 'check', CHECK_DAILY_CAP))) return err('busy', 429);
 
-  const [page, psi] = await Promise.allSettled([fetchPage(url), runPsi(url, env)]);
+  // Rankings need the business type from the page, so they start as soon as the page is read.
+  const pageP = fetchPage(url);
+  const rankP = pageP.then((page) => rankingsFor(url, page.facts, city, env));
+  const [page, psi, rank] = await Promise.allSettled([pageP, runPsi(url, env), rankP]);
   const facts = page.status === 'fulfilled' ? page.value.facts : null;
-  const report = buildReport(url.href, facts, psi.status === 'fulfilled' ? psi.value : null);
+  const report = buildReport(
+    url.href,
+    facts,
+    psi.status === 'fulfilled' ? psi.value : null,
+    new Date(),
+    rank.status === 'fulfilled' ? rank.value : { status: 'failed' },
+  );
+  report.city = city;
   if (report.score !== null) {
     const json = JSON.stringify(report);
-    await Promise.all([
-      env.MW.put(cacheKey, json, { expirationTtl: REPORT_TTL }),
-      env.MW.put(`report-id:${report.id}`, json, { expirationTtl: REPORT_ID_TTL }),
-    ]);
+    const writes = [env.MW.put(`report-id:${report.id}`, json, { expirationTtl: REPORT_ID_TTL })];
+    // A failed rankings lookup may be a passing outage, so that report isn't cached for others.
+    if (rank.status === 'fulfilled' && rank.value.status !== 'failed') writes.push(env.MW.put(cacheKey, json, { expirationTtl: REPORT_TTL }));
+    await Promise.all(writes);
   }
   return respond(report, 200, origin);
 }
@@ -96,24 +121,6 @@ async function handleEnhance(request, env, origin) {
   return respond({ ok: true }, 202, origin);
 }
 
-async function handlePreview(url, env, origin) {
-  const m = /^\/p\/([0-9A-Za-z-]{1,64})$/.exec(url.pathname);
-  const notFound = () => respond({ error: 'not-found' }, 404, origin);
-  if (!m) return notFound();
-  const raw = await env.MW.get(`lead:${m[1]}`);
-  const html = raw ? await env.MW.get(`preview:${m[1]}`) : null;
-  if (!html || !safeEqual(JSON.parse(raw).previewKey, url.searchParams.get('k'))) return notFound();
-  return new Response(html, {
-    status: 200,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'x-robots-tag': 'noindex, nofollow',
-      'content-security-policy': "default-src 'none'; style-src 'unsafe-inline'; img-src https: data:; font-src https:",
-      'cache-control': 'private',
-    },
-  });
-}
-
 export default {
   async scheduled(event, env, ctx) {
     ctx.waitUntil(runCron(env, new Date(event.scheduledTime)));
@@ -133,12 +140,10 @@ export default {
       });
     }
 
-    const url = new URL(request.url);
-    const { pathname } = url;
+    const { pathname } = new URL(request.url);
     try {
       if (pathname === '/check' && request.method === 'POST') return await handleCheck(request, env, o);
       if (pathname === '/enhance' && request.method === 'POST') return await handleEnhance(request, env, o);
-      if (pathname.startsWith('/p/') && request.method === 'GET') return await handlePreview(url, env, o);
       return respond({ error: 'not-found' }, 404, o);
     } catch (e) {
       console.error(e);

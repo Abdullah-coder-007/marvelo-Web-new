@@ -5,7 +5,7 @@ export default defineConfig({
   plugins: [
     cloudflareTest({
       wrangler: { configPath: './wrangler.toml' },
-      miniflare: { bindings: { TURNSTILE_SECRET: 'test-turnstile', PSI_API_KEY: 'test-psi', ANTHROPIC_API_KEY: 'test-anthropic', RESEND_API_KEY: 'test-resend', LEAD_EMAIL_TO: 'owner@test.example' } },
+      miniflare: { bindings: { TURNSTILE_SECRET: 'test-turnstile', PSI_API_KEY: 'test-psi', DATAFORSEO_LOGIN: 'test-dfs-login', DATAFORSEO_PASSWORD: 'test-dfs-password', RESEND_API_KEY: 'test-resend', LEAD_EMAIL_TO: 'owner@test.example' } },
     }),
   ],
 });

@@ -101,3 +101,44 @@ test('reads at most ~2 MB of an oversized HTML page and still returns facts', as
   expect(cancelled).toBe(true);
   expect(pulled).toBeLessThanOrEqual(2_000_000 + chunk.length);
 });
+
+test('new facts: lengths, canonical, favicon, images, h1', async () => {
+  const html = '<head><title>Rivera Plumbing | Austin plumbers</title><meta name="description" content="Fast plumbers"><link rel="canonical" href="/"><link rel="shortcut icon" href="/f.ico"></head>'
+    + '<body><h1>Austin <b>plumbers</b></h1><img src=a alt="Van"><img src=b alt="  "><img src=c><img src=d alt="Team"></body>';
+  const f = await scanHtml(htmlResponse(html, 'https://x.example/'));
+  expect(f).toMatchObject({ titleLength: 33, descriptionLength: 13, canonical: true, favicon: true, images: 4, imagesWithAlt: 2, h1: 'Austin plumbers', datedMarkup: false });
+  const g = await scanHtml(htmlResponse(fixture('good.html'), 'https://good.example/'));
+  expect(g).toMatchObject({ canonical: false, favicon: false, images: 0, imagesWithAlt: 0, h1: 'Austin plumbers you can trust' });
+});
+test('datedMarkup spots font, center, marquee and table layouts', async () => {
+  const dated = async (body) => (await scanHtml(htmlResponse(`<body>${body}</body>`, 'https://x.example/'))).datedMarkup;
+  expect(await dated('<font color=red>Hi</font>')).toBe(true);
+  expect(await dated('<center>Hi</center>')).toBe(true);
+  expect(await dated('<marquee>Hi</marquee>')).toBe(true);
+  expect(await dated('<table><tr><td><table><tr><td>x</td></tr></table></td></tr></table>')).toBe(true);
+  expect(await dated('<table><tr><td>Prices</td></tr></table><p>ok</p>')).toBe(false);
+});
+test('fetchPage checks robots.txt and sitemap.xml on the final origin', async () => {
+  const seen = [];
+  const fetch = async (u, init) => {
+    seen.push(u);
+    if (u === 'https://good.example/') return new Response(null, { status: 301, headers: { location: 'https://www.good.example/' } });
+    if (u.endsWith('/robots.txt')) { expect(init.signal).toBeTruthy(); return new Response('User-agent: *'); }
+    if (u.endsWith('/sitemap.xml')) return new Response('no', { status: 404 });
+    return htmlResponse(fixture('good.html'), u);
+  };
+  const r = await fetchPage(new URL('https://good.example/'), { fetch, resolve: PUB });
+  expect(r.facts).toMatchObject({ robotsTxt: true, sitemap: false });
+  expect(seen).toContain('https://www.good.example/robots.txt');
+  expect(seen).toContain('https://www.good.example/sitemap.xml');
+});
+test('robots.txt and sitemap are null when they cannot be fetched, and never reach a private host', async () => {
+  const fetch = async (u) => {
+    if (u.endsWith('/robots.txt')) throw new TypeError('network');
+    if (u.endsWith('/sitemap.xml')) return new Response(null, { status: 302, headers: { location: 'http://10.0.0.5/s.xml' } });
+    if (u.startsWith('http://10.')) throw new Error('should not fetch');
+    return htmlResponse(fixture('good.html'), u);
+  };
+  const r = await fetchPage(new URL('https://good.example/'), { fetch, resolve: PUB });
+  expect(r.facts).toMatchObject({ robotsTxt: null, sitemap: null });
+});

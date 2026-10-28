@@ -1,8 +1,10 @@
 const MAX_ISSUES = 4;
 const LOCAL_TYPE = /LocalBusiness|Plumber|Electrician|Dentist|Restaurant|Store|Contractor|Salon|Attorney|Physician|AutoRepair|HomeAndConstructionBusiness/i;
+const PITCH_HEADLINE = "Here's what's costing you customers";
 
 const clamp = (n) => Math.max(0, Math.min(100, n));
 const avg = (xs) => xs.reduce((a, b) => a + b, 0) / xs.length;
+const len = (n, s) => (typeof n === 'number' ? n : String(s || '').length);
 
 export function verdictFor(score) {
   if (score < 50) return "Your website is costing you customers.";
@@ -10,7 +12,8 @@ export function verdictFor(score) {
   return "A solid start. Here's what's left.";
 }
 
-// Each check: [failed?, points, problem, fix]
+// Each check: [failed?, points, problem, fix]. A category's own score starts at 100, loses the
+// points of each failed check and floors at 0. Issues keep the order of the checks.
 function runChecks(checks) {
   let own = 100;
   const issues = [];
@@ -38,38 +41,74 @@ function speedCategory(psi) {
   return { ...base, score: psi.performance, status: 'ok', issues };
 }
 
-function googleCategory(facts, psi) {
-  const base = { key: 'google', title: 'Found on Google' };
+function titleProblem(n) {
+  if (n === 0) return 'Your page has no title, so Google shows a blank headline for you.';
+  return n < 30 ? 'Your page title is too short to tell Google what you do and where.' : 'Your page title is too long, so Google cuts it off.';
+}
+function descriptionProblem(n) {
+  if (n === 0) return 'Your page has no short description under its name in search results.';
+  return n < 70 ? 'Your page description is too short to make people want to click.' : 'Your page description is too long, so Google cuts it off.';
+}
+
+// SEO points (sum 100): indexable 15, title 30-65 chars 15, description 70-160 chars 15,
+// exactly one h1 10, LocalBusiness-type JSON-LD 15, canonical 10, alt text on >= 80% of images 10,
+// /robots.txt 5, /sitemap.xml 5. robots/sitemap only fail when known to be missing (false, not null).
+// Score = mean of this own score and PageSpeed's SEO score, or whichever one exists.
+function seoCategory(facts, psi) {
+  const base = { key: 'seo', title: 'Google basics' };
   if (!facts && !psi) return { ...base, score: null, status: 'unavailable', issues: noFacts('Google basics') };
   let own = null;
   let issues = [];
   if (facts) {
+    const t = len(facts.titleLength, facts.title);
+    const d = len(facts.descriptionLength, facts.description);
+    const images = facts.images || 0;
     ({ own, issues } = runChecks([
-      [!facts.title, 20, "Your page has no title, so Google shows a blank headline for you.", 'We write a clear title with your trade and your town.'],
-      [!facts.description, 20, 'Your page has no short description under its name in search results.', 'We write one that makes people want to call you.'],
-      [facts.h1Count !== 1, 20, facts.h1Count === 0 ? 'Your page has no main heading, so Google cannot tell what you do.' : 'Your page has more than one main heading, which muddles what you do.', 'We give each page one clear heading that says what you do.'],
-      [!facts.jsonLdTypes.some((t) => LOCAL_TYPE.test(t)), 20, "Google doesn't know you are a local business with an address and hours.", 'We add the hidden details that tell Google who you are and where you work.'],
-      [!facts.indexable, 20, 'Your page is telling Google to stay away.', 'We switch that off so customers can find you.'],
+      [!facts.indexable, 15, 'Your page is telling Google to stay away.', 'We switch that off so customers can find you.'],
+      [t < 30 || t > 65, 15, titleProblem(t), 'We write a clear title with your trade and your town.'],
+      [d < 70 || d > 160, 15, descriptionProblem(d), 'We write one that makes people want to call you.'],
+      [facts.h1Count !== 1, 10, facts.h1Count === 0 ? 'Your page has no main heading, so Google cannot tell what you do.' : 'Your page has more than one main heading, which muddles what you do.', 'We give each page one clear heading that says what you do.'],
+      [!(facts.jsonLdTypes || []).some((x) => LOCAL_TYPE.test(x)), 15, "Google doesn't know you are a local business with an address and hours.", 'We add the hidden details that tell Google who you are and where you work.'],
+      [!facts.canonical, 10, "Your page doesn't tell Google its main address, so it can show up twice and split your visits.", 'We give every page one main address.'],
+      [images > 0 && (facts.imagesWithAlt || 0) / images < 0.8, 10, "Most of your images have no description, so Google can't tell what they show.", 'We describe every image so Google understands your work.'],
+      [facts.robotsTxt === false, 5, "Your site has no robots.txt file, which tells Google which pages to read.", 'We set it up so Google reads the right pages.'],
+      [facts.sitemap === false, 5, 'Your site has no sitemap, the list Google uses to find all your pages.', 'We add a sitemap so every page gets found on Google.'],
     ]));
   }
   const score = psi && own !== null ? Math.round((psi.seo + own) / 2) : psi ? psi.seo : own;
   return { ...base, score, status: 'ok', issues: issues.slice(0, MAX_ISSUES) };
 }
 
+// Design points from the page (sum 80): viewport 20, HTTPS 20, dated markup 20, copyright year
+// 2+ years old 10, favicon 10. From PageSpeed audits (sum 20, only when PageSpeed ran):
+// oversized images 5, old image formats 5, small text 5, cramped tap targets 5.
+// Score = mean of this own score and the PageSpeed accessibility/best-practices average.
+// Without page facts the score is the PageSpeed part alone.
+const DESIGN_AUDITS = [
+  ['uses-responsive-images', 'Your images are bigger than they need to be, which slows the page.', 'We resize every image to fit the screen.'],
+  ['modern-image-formats', 'Your images use old formats that load slowly.', 'We switch them to modern formats that load fast.'],
+  ['font-size', 'Some text is too small to read on a phone.', 'We use clear text sizes that are easy to read.'],
+  ['tap-targets', 'Buttons and links are too close together to tap easily.', 'We give every button room so it is easy to tap.'],
+];
+
 function designCategory(facts, psi, now) {
   const base = { key: 'design', title: 'Look and trust' };
   if (!facts && !psi) return { ...base, score: null, status: 'unavailable', issues: noFacts('design') };
-  let own = null;
-  let issues = [];
+  const checks = [];
   if (facts) {
-    ({ own, issues } = runChecks([
-      [!facts.viewport, 34, "Your site isn't set up for phones, so people have to pinch and zoom.", 'We build it to fit every screen.'],
-      [!facts.https, 34, 'Browsers warn visitors that your site is "not secure".', 'We set up the secure padlock so visitors trust you.'],
-      [facts.copyrightYear != null && facts.copyrightYear <= now.getFullYear() - 2, 34, `Your footer still says ${facts.copyrightYear}, which makes the site look forgotten.`, 'We keep it fresh so you look open for business.'],
-    ]));
+    checks.push(
+      [!facts.viewport, 20, "Your site isn't set up for phones, so people have to pinch and zoom.", 'We build it to fit every screen.'],
+      [!facts.https, 20, 'Browsers warn visitors that your site is "not secure".', 'We set up the secure padlock so visitors trust you.'],
+      [!!facts.datedMarkup, 20, 'Your site is built with old-fashioned code that looks dated and breaks on phones.', 'We rebuild it with modern, clean code.'],
+      [facts.copyrightYear != null && facts.copyrightYear <= now.getFullYear() - 2, 10, `Your footer still says ${facts.copyrightYear}, which makes the site look forgotten.`, 'We keep it fresh so you look open for business.'],
+      [!facts.favicon, 10, 'Your site has no small icon in the browser tab, so it looks unfinished.', 'We add your logo as the tab icon.'],
+    );
   }
+  if (psi) for (const [id, problem, fix] of DESIGN_AUDITS) checks.push([!!psi.audits?.[id], 5, problem, fix]);
+  const { own, issues } = runChecks(checks);
+  const ownScore = facts ? own : null;
   const psiPart = psi ? avg([psi.accessibility, psi.bestPractices]) : null;
-  const score = psi && own !== null ? Math.round((psiPart + own) / 2) : psi ? Math.round(psiPart) : own;
+  const score = psi && ownScore !== null ? Math.round((psiPart + ownScore) / 2) : psi ? Math.round(psiPart) : ownScore;
   return { ...base, score, status: 'ok', issues: issues.slice(0, MAX_ISSUES) };
 }
 
@@ -84,11 +123,49 @@ function ctaCategory(facts) {
   return { ...base, score: own, status: 'ok', issues: issues.slice(0, MAX_ISSUES) };
 }
 
-export function buildReport(url, facts, psi, now = new Date()) {
+// Points per search: positions 1-3: 100, 4-10: 70, 11-20: 40, 21-100: 15, not found: 0.
+const searchPoints = (p) => (p == null ? 0 : p <= 3 ? 100 : p <= 10 ? 70 : p <= 20 ? 40 : p <= 100 ? 15 : 0);
+const FOUND_FIX = 'We build pages for the searches your customers use, so you get found on Google.';
+
+function rankingsCategory(rank) {
+  const base = { key: 'rankings', title: 'Found on Google' };
+  const results = rank?.status === 'ok' && Array.isArray(rank.results) ? rank.results : [];
+  if (!results.length) {
+    const reason = rank?.status === 'no-city' || rank?.status === 'no-trade' ? rank.status : 'failed';
+    const problem = reason === 'no-trade' ? "We couldn't tell what your business does." : "We couldn't check rankings for that city.";
+    return { ...base, score: null, status: 'unavailable', reason, results: [], issues: [{ problem, fix: 'We research the searches your customers use when we build your new site.' }] };
+  }
+  const inMaps = results.some((r) => r.inMaps);
+  const score = Math.min(100, Math.round(avg(results.map((r) => searchPoints(r.position)))) + (inMaps ? 10 : 0));
+  const missing = results.filter((r) => r.position == null || r.position > 20)
+    .map((r) => ({ problem: `You're not in the top 20 for '${r.keyword}'.`, fix: FOUND_FIX }));
+  const pageTwo = results.filter((r) => r.position > 10 && r.position <= 20)
+    .map((r) => ({ problem: `You're not on the first page for '${r.keyword}', where most people click.`, fix: FOUND_FIX }));
+  const words = [...missing, ...pageTwo];
+  const issues = inMaps
+    ? words.slice(0, MAX_ISSUES)
+    : [...words.slice(0, MAX_ISSUES - 1), { problem: "You don't show up in the Google Maps results for these searches.", fix: 'We set up your local business details so you get found on Google Maps.' }];
+  return { ...base, score, status: 'ok', results, issues };
+}
+
+// The first issue from each of the three lowest-scoring categories that have a score and an issue.
+function buildPitch(categories) {
+  const points = categories
+    .filter((c) => c.score !== null && c.issues.length)
+    .sort((a, b) => a.score - b.score)
+    .slice(0, 3)
+    .map((c) => ({ problem: c.issues[0].problem, fix: c.issues[0].fix }));
+  return { headline: PITCH_HEADLINE, points };
+}
+
+export function buildReport(url, facts, psi, now = new Date(), rank = null) {
   const id = crypto.randomUUID();
-  if (!facts && !psi) return { id, url, score: null, verdict: "We couldn't reach that website.", categories: [] };
-  const categories = [speedCategory(psi), googleCategory(facts, psi), designCategory(facts, psi, now), ctaCategory(facts)];
+  const checkedAt = now.toISOString();
+  if (!facts && !psi) {
+    return { id, url, checkedAt, score: null, verdict: "We couldn't reach that website.", categories: [], pitch: { headline: PITCH_HEADLINE, points: [] } };
+  }
+  const categories = [designCategory(facts, psi, now), seoCategory(facts, psi), rankingsCategory(rank), speedCategory(psi), ctaCategory(facts)];
   const scored = categories.filter((c) => c.score !== null).map((c) => c.score);
   const score = Math.round(avg(scored));
-  return { id, url, score, verdict: verdictFor(score), categories };
+  return { id, url, checkedAt, score, verdict: verdictFor(score), categories, pitch: buildPitch(categories) };
 }

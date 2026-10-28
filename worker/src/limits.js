@@ -21,3 +21,12 @@ export async function rateLimit(env, key, max, windowSec) {
   await env.MW.put(kvKey, String(count), { expirationTtl: Math.max(windowSec, 60) });
   return true;
 }
+
+// Site-wide cap per UTC day, key cap:<name>:<YYYY-MM-DD>. Approximate for the same KV reason as above.
+export async function capDaily(env, name, max, now = new Date()) {
+  const kvKey = `cap:${name}:${now.toISOString().slice(0, 10)}`;
+  const count = parseInt((await env.MW.get(kvKey)) ?? '0', 10) + 1;
+  if (count > max) return false;
+  await env.MW.put(kvKey, String(count), { expirationTtl: 2 * 86400 });
+  return true;
+}
