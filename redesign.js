@@ -191,9 +191,10 @@ const TURNSTILE_SITE_KEY = '';
     statusEl.textContent = 'Checking your website. This usually takes about 20 seconds.';
     const timers = [2000, 6000, 10000].map((ms, i) => setTimeout(() => tick(steps[i], true), ms));
     const abort = new AbortController();
-    const fetchTimer = setTimeout(() => abort.abort(), FETCH_TIMEOUT);
+    let fetchTimer; // started after the token arrives, so a slow Turnstile click does not eat the fetch budget
     try {
       const turnstileToken = await getToken();
+      fetchTimer = setTimeout(() => abort.abort(), FETCH_TIMEOUT);
       const res = await fetch(`${API_BASE}/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
