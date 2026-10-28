@@ -45,6 +45,7 @@ const TURNSTILE_SITE_KEY = '';
   else waitForGo.observe(root, { attributes: true, attributeFilter: ['class'] });
 
   // ---------- website address: shows in both address bars, then hands off to the form ----------
+  let checking = false;
   const urlForm = $('url-form');
   const urlInput = $('u-site');
   const urlErr = $('u-site-err');
@@ -62,6 +63,7 @@ const TURNSTILE_SITE_KEY = '';
 
   urlForm.addEventListener('submit', (e) => {
     e.preventDefault();
+    if (checking) return; // a check is already running
     const d = domainOf(urlInput.value);
     if (!d || !d.includes('.')) {
       urlInput.setAttribute('aria-invalid', 'true');
@@ -84,8 +86,9 @@ const TURNSTILE_SITE_KEY = '';
   const bodyEl = $('report-body');
   const steps = [...stepsEl.children];
   const MSG_UNREACHED = "We couldn't reach that website.";
+  const TOKEN_TIMEOUT = 30000;
+  const FETCH_TIMEOUT = 40000;
   const MSG_LATER = 'Please try again in a little while.';
-  let checking = false;
   let tsPromise = null;
 
   // Turnstile is only loaded once, and only when both constants are set
@@ -97,20 +100,34 @@ const TURNSTILE_SITE_KEY = '';
     s.onerror = () => { tsPromise = null; reject(new Error('turnstile')); };
     document.head.appendChild(s);
   }));
-  // A fresh token for every check (it only shows something if Cloudflare needs a click)
+  // A fresh token for every check. Every way it can stall ends in a rejection, so the button never stays locked.
   const getToken = async () => {
     if (!TURNSTILE_SITE_KEY) return '';
     const ts = await loadTurnstile();
     return new Promise((resolve, reject) => {
-      const id = ts.render($('ts-box'), {
+      let id;
+      const done = (fn, v) => { clearTimeout(t); try { ts.remove(id); } catch (e) {} fn(v); };
+      const t = setTimeout(() => done(reject, new Error('turnstile')), TOKEN_TIMEOUT);
+      const stall = () => done(reject, new Error('turnstile'));
+      id = ts.render($('ts-box'), {
         sitekey: TURNSTILE_SITE_KEY,
         appearance: 'interaction-only',
-        callback: (t) => { resolve(t); setTimeout(() => ts.remove(id), 0); },
-        'error-callback': () => { reject(new Error('turnstile')); ts.remove(id); },
+        callback: (tok) => done(resolve, tok),
+        'error-callback': stall,
+        'timeout-callback': stall,
+        'expired-callback': stall,
+        'unsupported-callback': stall,
       });
     });
   };
 
+  // Step ticks get a spoken state as well as the visual tick
+  const tick = (li, done) => {
+    li.classList.toggle('is-done', done);
+    const old = li.querySelector('.sr');
+    if (old) old.remove();
+    if (done) li.appendChild(text('span', 'sr', ' done'));
+  };
   const text = (tag, cls, str) => {
     const el = document.createElement(tag);
     if (cls) el.className = cls;
@@ -124,9 +141,10 @@ const TURNSTILE_SITE_KEY = '';
   const fail = (msg) => {
     stepsEl.hidden = true;
     bodyEl.hidden = true;
+    showReport(); // unhide first so the live region announces the text
     statusEl.classList.add('is-error');
     statusEl.textContent = msg;
-    showReport();
+    reportEl.focus({ preventScroll: true });
   };
 
   const renderReport = (r) => {
@@ -163,36 +181,43 @@ const TURNSTILE_SITE_KEY = '';
   async function runCheck(domain) {
     if (checking) return;
     checking = true;
+    window.MW.lastReportId = null; // never leave a stale id for the lead form
     submitBtn.disabled = true;
     statusEl.classList.remove('is-error');
-    statusEl.textContent = 'Checking your website. This usually takes about 20 seconds.';
     bodyEl.hidden = true;
-    steps.forEach((li) => li.classList.remove('is-done'));
+    steps.forEach((li) => tick(li, false));
     stepsEl.hidden = false;
     showReport();
-    const timers = [2000, 6000, 10000].map((ms, i) => setTimeout(() => steps[i].classList.add('is-done'), ms));
+    statusEl.textContent = 'Checking your website. This usually takes about 20 seconds.';
+    const timers = [2000, 6000, 10000].map((ms, i) => setTimeout(() => tick(steps[i], true), ms));
+    const abort = new AbortController();
+    const fetchTimer = setTimeout(() => abort.abort(), FETCH_TIMEOUT);
     try {
       const turnstileToken = await getToken();
       const res = await fetch(`${API_BASE}/check`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: domain, turnstileToken }),
+        signal: abort.signal,
       });
       if (res.status === 429 || res.status === 403) { fail(MSG_LATER); return; }
       if (!res.ok) { fail(MSG_UNREACHED); return; }
       const report = await res.json();
       if (!report || typeof report.score !== 'number') { fail(MSG_UNREACHED); return; }
       timers.forEach(clearTimeout);
-      steps.forEach((li) => li.classList.add('is-done'));
+      steps.forEach((li) => tick(li, true));
       renderReport(report);
       stepsEl.hidden = true;
-      statusEl.textContent = 'Your report is ready.';
       bodyEl.hidden = false;
       showReport();
+      statusEl.textContent = 'Your report is ready.';
+      reportEl.focus({ preventScroll: true });
     } catch (err) {
-      fail(MSG_UNREACHED);
+      // a stalled Turnstile or a hung worker reads as "try again later"; a refused connection as unreachable
+      fail(err && (err.name === 'AbortError' || err.message === 'turnstile') ? MSG_LATER : MSG_UNREACHED);
     } finally {
       timers.forEach(clearTimeout);
+      clearTimeout(fetchTimer);
       checking = false;
       submitBtn.disabled = false;
     }
